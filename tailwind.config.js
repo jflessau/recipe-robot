@@ -8,9 +8,13 @@ module.exports = {
     colors: {
       bg: "#fcecbc",
       fg: "#fafbff",
+      mid: "#f3d584",
       contrast: "#04152b",
-      attention: "#e90157",
-      info: "#0e62bb",
+      attention: "#a519ff",
+      info: "#09488a",
+
+      color: "#04152b",
+      "color-inverted": "#fafbff",
     },
     extend: {
       fontFamily: {
@@ -24,7 +28,7 @@ module.exports = {
       },
       fontSize: {
         xs: "0.6rem",
-        s: "0.9rem",
+        s: "0.8rem",
         m: "1rem",
         l: "1.1rem",
         xl: "1.6rem",

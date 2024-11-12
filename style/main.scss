@@ -1,17 +1,18 @@
 $bg: #fcecbc;
 $fg: #fafbff;
+$mid: #f3d584;
 $contrast: #04152b;
-$attention: #e90157;
-$info: #0e62bb;
+$attention: #a519ff;
+$info: #09488a;
 
 $font-color: $contrast;
-$font-color-inverted: $bg;
+$font-color-inverted: $fg;
 $font-family: "Merriweather", serif;
 
 $max-content-width: 600px;
 
 $font-size-xs: 0.6rem;
-$font-size-s: 0.9rem;
+$font-size-s: 0.8rem;
 $font-size-m: 1rem;
 $font-size-l: 1.1rem;
 $font-size-xl: 1.8rem;
@@ -28,9 +29,17 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
-  background: linear-gradient(0deg, $fg 0%, $bg 5%, $bg 95%, $fg 100%), $fg;
+  background: linear-gradient(
+      0deg,
+      rgba($mid, 0.95) 0%,
+      rgba($bg, 0.95) 10%,
+      rgba($bg, 0.95) 90%,
+      rgba($mid, 0.95) 100%
+    ),
+    url("/img/noise.jpg");
+  background-blend-mode: darken;
   position: relative;
   font-family: $font-family;
 }
@@ -68,23 +77,12 @@ html {
   line-height: $font-size-xl;
 }
 
-.clickable {
+.clickable,
+button {
   cursor: pointer;
   user-select: none;
   --webkit-user-select: none;
   -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
-
-  &:hover {
-    filter: brightness(1.05);
-    &:active {
-      filter: brightness(0.9);
-    }
-  }
-  &.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    filter: saturate(0.5);
-  }
 }
 
 main {
@@ -131,6 +129,21 @@ main {
       border-color: $info;
       border-width: 2px;
     }
+  }
+}
+
+button.fancy {
+  padding: 0.5rem 1rem;
+  font-size: $font-size-m;
+  border: none;
+  background: $attention;
+  color: $font-color-inverted;
+  font-weight: 800;
+  border-radius: 0.4rem;
+  box-shadow: 0 0.25rem 0 0 darken($attention, 20%);
+  &:active {
+    box-shadow: 0 0.1rem 0 0 darken($attention, 20%);
+    transform: translateY(0.15rem);
   }
 }
 
