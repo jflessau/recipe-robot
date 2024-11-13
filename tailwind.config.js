@@ -12,6 +12,7 @@ module.exports = {
       contrast: "#04152b",
       attention: "#a519ff",
       info: "#09488a",
+      error: "#971d00",
 
       color: "#04152b",
       "color-inverted": "#fafbff",

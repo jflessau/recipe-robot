@@ -4,6 +4,7 @@ $mid: #f3d584;
 $contrast: #04152b;
 $attention: #a519ff;
 $info: #09488a;
+$error: #971d00;
 
 $font-color: $contrast;
 $font-color-inverted: $fg;
@@ -12,7 +13,7 @@ $font-family: "Merriweather", serif;
 $max-content-width: 600px;
 
 $font-size-xs: 0.6rem;
-$font-size-s: 0.8rem;
+$font-size-s: 0.9rem;
 $font-size-m: 1rem;
 $font-size-l: 1.1rem;
 $font-size-xl: 1.8rem;
@@ -139,7 +140,7 @@ button.fancy {
   background: $attention;
   color: $font-color-inverted;
   font-weight: 800;
-  border-radius: 0.4rem;
+  border-radius: 0.5rem;
   box-shadow: 0 0.25rem 0 0 darken($attention, 20%);
   &:active {
     box-shadow: 0 0.1rem 0 0 darken($attention, 20%);
