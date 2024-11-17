@@ -10,7 +10,7 @@ $font-color: $contrast;
 $font-color-inverted: $fg;
 $font-family: "Merriweather", serif;
 
-$max-content-width: 600px;
+$max-content-width: 375px;
 
 $font-size-xs: 0.6rem;
 $font-size-s: 0.9rem;
@@ -45,13 +45,6 @@ body {
   font-family: $font-family;
 }
 
-main {
-  width: 100%;
-  max-width: $max-content-width;
-  margin: 1rem;
-  padding: 2rem 1rem;
-}
-
 a,
 p,
 span,
@@ -68,6 +61,7 @@ input,
 form,
 textarea,
 button,
+main,
 html {
   color: $font-color;
   padding: 0;
@@ -87,6 +81,12 @@ button {
 }
 
 main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  width: $max-content-width;
+  padding: 2rem 10px;
+
   h1 {
     font-size: $font-size-xl;
     font-weight: 800;
