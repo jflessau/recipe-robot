@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 #[component]
-pub fn View() -> impl IntoView {
+pub fn ShoppingListItem() -> impl IntoView {
     view! {
         <div class="w-full p-2 flex flex-col justfy-start items-stretch gap-2 rounded-lg bg-mid">
             <div class="w-full flex justify-start gap-2">

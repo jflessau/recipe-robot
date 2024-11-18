@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 #[component]
-pub fn View(set_show_input: WriteSignal<bool>) -> impl IntoView {
+pub fn ChangeRecipeButton(set_show_input: WriteSignal<bool>) -> impl IntoView {
     view! {
         <button
             on:click={move |_| set_show_input(true)}

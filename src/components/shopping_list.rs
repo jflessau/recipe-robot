@@ -1,12 +1,14 @@
-use crate::components::{change_recipe_button, shopping_list_item};
+use crate::components::{
+    change_recipe_button::ChangeRecipeButton, shopping_list_item::ShoppingListItem,
+};
 use crate::prelude::*;
 
 #[component]
-pub fn View(set_show_input: WriteSignal<bool>) -> impl IntoView {
+pub fn ShoppingList(set_show_input: WriteSignal<bool>) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-start justify-start gap-6">
             <div class="w-full flex justify-center items-center gap-2">
-                <change_recipe_button::View set_show_input />
+                <ChangeRecipeButton set_show_input />
             </div>
 
             <div class="w-full flex flex-col justify-start items-center">
@@ -19,7 +21,7 @@ pub fn View(set_show_input: WriteSignal<bool>) -> impl IntoView {
             </div>
 
             <div class="w-full flex flex-col gap-2 items-center justify-start">
-                <shopping_list_item::View />
+                <ShoppingListItem />
             </div>
         </div>
     }
