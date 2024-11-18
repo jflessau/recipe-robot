@@ -33,12 +33,12 @@ pub fn View() -> impl IntoView {
                         <div class="w-full flex justify-start items-center gap-2">
                             <Icon icon=i::ImCoinEuro class="text-l text-center w-5 pl-1"/>
                             <p class="font-bold">
-                                "1,"
-                                <sup>"99"</sup>
+                                "3,"
+                                <sup>"97"</sup>
                             </p>
                             <p class="text-l font-bold opacity-50">
                                 <span class="text-xs">
-                                    "3,"
+                                    "1,"
                                     <sup>"99"</sup>
                                     "/Stk."
                                 </span>
