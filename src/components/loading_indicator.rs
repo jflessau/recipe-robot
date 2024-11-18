@@ -4,10 +4,10 @@ use crate::prelude::*;
 pub fn LoadingIndicator(title: String, subtitle: String) -> impl IntoView {
     view! {
         <div class="flex flex-col justify-start items-center gap-4">
-            <p class="text-attention text-l font-black">
+            <p class="text-attention text-xl font-black leading-relaxed">
                 {title}
                 <br></br>
-                <span class="text-attention info text-s font-black">{subtitle}</span>
+                <span class="text-attention info text font-black">{subtitle}</span>
             </p>
             <img
                 class="w-20 h-20 mt-8"

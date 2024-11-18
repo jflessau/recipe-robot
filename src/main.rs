@@ -2,8 +2,10 @@
 #[tokio::main]
 async fn main() {
     use axum::Router;
+
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
+
     use listoplate::app::*;
     use listoplate::fileserv::file_and_error_handler;
 
@@ -27,7 +29,12 @@ async fn main() {
 
 #[cfg(not(feature = "ssr"))]
 pub fn main() {
-    // no client-side main function
-    // unless we want this to work with e.g., Trunk for a purely client-side app
-    // see lib.rs for hydration function instead
+    use leptos::*;
+    use listoplate::app::App;
+
+    _ = console_log::init_with_level(log::Level::Info);
+    console_error_panic_hook::set_once();
+    mount_to_body(|| {
+        view! {  <App/> }
+    });
 }

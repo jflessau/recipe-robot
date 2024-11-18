@@ -1,6 +1,7 @@
 use crate::components::{
     find_ingredients_button::FindIngredientsButton, loading_indicator::LoadingIndicator,
-    recipe_input::View as RecipeInput,
+    recipe_input::View as RecipeInput, reset_recipe_button::ResetRecipeButton,
+    shopping_list::ShoppingList,
 };
 use crate::prelude::*;
 
@@ -118,9 +119,9 @@ pub fn View() -> impl IntoView {
                 alt="shopping bag with vegetables, fruits and beverages"
             />
 
-            <h1 class="mb-8 text-m">"koch-doch-einfach.org"</h1>
+            <h1 class="mb-6 text-m">"koch-doch-einfach.org"</h1>
 
-            <div class="w-full flex flex-col items-center justify-start gap-6">
+            <div class="w-full flex flex-col items-center justify-start gap-12">
                 {
                     move || {
                         match state() {
@@ -129,9 +130,15 @@ pub fn View() -> impl IntoView {
                                     <p class="w-full text-center font-bold text-error">
                                         {error.clone()}
                                     </p>
+
                                     <button
-                                        on:click=move |_| set_state(state().reset())
-                                        class="w-fit py-1 px-4 font-bold text-color-inverted bg-info rounded-lg">
+                                        on:click=move |_| set_state(State::ShoppingList {
+                                            recipe_text: "".to_string(),
+                                            ingredients: vec!["test".to_string()]
+                                        })
+                                        class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
+                                    >
+                                        <Icon icon=i::TbArrowLoopLeft2 width="0.9rem" height="0.9rem"/>
                                         "Nochmal versuchen"
                                     </button>
                                 }.into_view()
@@ -151,16 +158,15 @@ pub fn View() -> impl IntoView {
                             },
                             State::ShoppingList { ingredients, .. } => {
                                 view! {
-                                    <div class="w-full flex flex-col items-center justify-start gap-6">
-                                        <h2 class="text-xl text-center font-black text-attention">"Zutaten"</h2>
-                                        {
-                                            ingredients.iter().map(|ingredient| {
-                                                view! {
-                                                    <p class="text-l">{ingredient}</p>
-                                                }
-                                            }).collect::<Vec<_>>()
-                                        }
-                                    </div>
+                                    <button
+                                        on:click=move |_| set_state(state().reset())
+                                        class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
+                                    >
+                                        <Icon icon=i::LuFileEdit width="0.9rem" height="0.9rem"/>
+                                        "Rezept ändern"
+                                    </button>
+
+                                    <ShoppingList ingredients />
                                 }.into_view()
                             },
                         }
