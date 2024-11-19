@@ -12,9 +12,6 @@ reqwest = { version = "0.12.2", default-features = false, features = [
   "rustls-tls",
   "json",
 ] }
-openai-api-rs = { version = "5.2.1", features = [
-  "rustls",
-], default-features = false, optional = true }
 axum = { version = "0.7", optional = true }
 console_log = "1.0"
 console_error_panic_hook = "0.1"
@@ -28,6 +25,7 @@ tower-http = { version = "0.5", features = [
   "fs",
   "trace",
   "cors",
+  "timeout",
 ], optional = true }
 wasm-bindgen = "=0.2.95"
 thiserror = "1"
@@ -39,6 +37,9 @@ serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.64"
 icondata = "0.5.0"
 http = "1"
+openai = { version = "1.0.0-alpha.16", default-features = false, features = [
+  "rustls",
+], optional = true }
 
 [features]
 ssr = [
@@ -48,7 +49,7 @@ ssr = [
   "dep:tower-http",
   "dep:leptos_axum",
   "dep:dotenv",
-  "dep:openai-api-rs",
+  "dep:openai",
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",

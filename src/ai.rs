@@ -1,9 +1,10 @@
 use super::shopping_list::{Ingredient, IngredientStatus};
 use crate::prelude::*;
-use openai_api_rs::v1::{
-    api::OpenAIClient,
-    chat_completion::{ChatCompletionMessage, ChatCompletionRequest, Content, MessageRole},
-    common::GPT4_O,
+
+use openai::{
+    chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
+    completions::Completion,
+    set_base_url, set_key,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -33,53 +34,48 @@ impl Ai {
             )
         }
 
-        let api_key = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
-        let Ok(client) = OpenAIClient::builder().with_api_key(api_key).build() else {
-            bail!("failed to create openai client");
-        };
+        let token = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
+
+        set_key(token);
+        set_base_url("https://api.openai.com/v1/".to_string());
 
         let mut messages = vec![ChatCompletionMessage {
-            name: None,
-            role: MessageRole::system,
-            tool_call_id: None,
-            tool_calls: None,
-            content: Content::Text(String::from(
-                r#"
-                    You are integrated into a recipe web app. Users enter recipes and you extract ingredients.
-                    Then the app calls an API of a grocery store and tries to find matches for the ingredients.
-                    You help to find the best match for the ingredients.
-                    If not told otherwise, you assume the API is talking german.
-                    You are agnostic to the recipe language.
+            role: ChatCompletionMessageRole::System,
+            content: Some(r#"
+                You are integrated into a recipe web app. Users enter recipes and you extract ingredients.
+                Then the app calls an API of a grocery store and tries to find matches for the ingredients.
+                You help to find the best match for the ingredients.
+                If not told otherwise, you assume the API is talking german.
+                You are agnostic to the recipe language.
 
-                    The app is in the early stages of development and you are the first AI to be integrated into it.
-                    Good luck!
-                "#,
-            )),
+                The app is in the early stages of development and you are the first AI to be integrated into it.
+                Good luck!
+            "#.to_string()),
+            name: None,
+            function_call: None,
         }];
 
         messages.push(ChatCompletionMessage {
+            role: ChatCompletionMessageRole::User,
+            content: Some(message),
             name: None,
-            role: MessageRole::user,
-            tool_call_id: None,
-            tool_calls: None,
-            content: Content::Text(message.clone()),
+            function_call: None,
         });
 
-        let req = ChatCompletionRequest::new(GPT4_O.to_string(), messages.clone());
+        let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", messages.clone())
+            .create()
+            .await
+            .context("failed to create chat completion")?;
 
-        let result = client.chat_completion(req).await?;
-
-        if let Some(message) = result
-            .choices
-            .iter()
-            .next()
-            .and_then(|m| m.message.content.clone())
-        {
-            Ok(message)
-        } else {
-            error!("no response from ai, result: {result:#?}, input: {message}");
+        let Some(response) = chat_completion.choices.first() else {
             bail!("no response from ai")
-        }
+        };
+
+        let Some(message) = response.message.content.clone() else {
+            bail!("no message in response from ai")
+        };
+
+        Ok(message)
     }
 
     pub async fn get_ingredients(&mut self, recipe: &String) -> Result<Vec<Ingredient>> {

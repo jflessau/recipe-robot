@@ -2,7 +2,7 @@ mod ingredient;
 
 use super::{
     ai::Ai,
-    vendor::{Rewe, Vendor, VendorSelect},
+    vendor::{Rewe, ReweConfig, Vendor, VendorSelect},
 };
 pub use ingredient::{Ingredient, IngredientStatus};
 
@@ -23,7 +23,12 @@ pub struct ShoppingList {
 }
 
 impl ShoppingList {
-    pub fn new(recipe: String, themes: Vec<String>, vendor: VendorSelect, ai: Ai) -> Self {
+    pub fn new(recipe: String, themes: Vec<String>) -> Self {
+        let ai = Ai::new(7000).expect("failed to create ai");
+        let vendor = VendorSelect::Rewe {
+            config: ReweConfig { zip_code: 10961 },
+        };
+
         Self {
             recipe,
             ingredients: None,
@@ -109,6 +114,10 @@ impl ShoppingList {
             .sum::<f32>();
 
         Ok(())
+    }
+
+    pub fn ingredients(&self) -> Vec<Ingredient> {
+        self.ingredients.clone().unwrap_or_default()
     }
 }
 

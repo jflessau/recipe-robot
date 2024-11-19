@@ -10,6 +10,7 @@ async fn main() {
     use listoplate::fileserv::file_and_error_handler;
     use tower::ServiceBuilder;
     use tower_http::{
+        timeout::TimeoutLayer,
         trace::{DefaultOnResponse, TraceLayer},
         LatencyUnit,
     };
@@ -58,6 +59,7 @@ async fn main() {
         .leptos_routes(&leptos_options, routes, App)
         .fallback(file_and_error_handler)
         .with_state(leptos_options)
+        .layer(TimeoutLayer::new(std::time::Duration::from_secs(30)))
         .layer(logging_middleware);
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
