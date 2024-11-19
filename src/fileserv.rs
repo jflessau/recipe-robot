@@ -52,9 +52,5 @@ async fn get_static_file(
         .await
     {
         Ok(res) => Ok(res.into_response()),
-        Err(err) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error serving files: {err}"),
-        )),
     }
 }

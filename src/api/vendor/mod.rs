@@ -1,8 +1,8 @@
 mod rewe;
-use super::ai::Ai;
-use super::ingredient::{Ingredient, IngredientStatus};
-use anyhow::{bail, Context, Result};
 pub use rewe::{Rewe, ReweConfig};
+
+use super::*;
+
 use serde::{Deserialize, Serialize};
 
 // const THEMES: [&str; 14] = [

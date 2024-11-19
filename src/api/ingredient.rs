@@ -1,6 +1,4 @@
-use super::vendor::Item;
-use serde::{Deserialize, Serialize};
-use std::fmt::{self, Display};
+use super::*;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Ingredient {

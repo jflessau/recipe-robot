@@ -7,7 +7,14 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+dotenv = { version = "0.15.0", optional = true }
+reqwest = { version = "0.12.2", default-features = false, features = [
+  "rustls-tls",
+  "json",
+] }
+openai-api-rs = { version = "5.2.1", features = ["rustls"], optional = true }
 axum = { version = "0.7", optional = true }
+console_log = "1.0"
 console_error_panic_hook = "0.1"
 leptos = { version = "0.6", features = ["nightly"] }
 leptos_axum = { version = "0.6", optional = true }
@@ -15,26 +22,21 @@ leptos_meta = { version = "0.6", features = ["nightly"] }
 leptos_router = { version = "0.6", features = ["nightly"] }
 tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
 tower = { version = "0.4", optional = true, features = ["util"] }
-tower-http = { version = "0.5", features = ["fs"], optional = true }
+tower-http = { version = "0.5", features = [
+  "fs",
+  "trace",
+  "cors",
+], optional = true }
 wasm-bindgen = "=0.2.95"
 thiserror = "1"
-tracing = { version = "0.1" }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-dotenv = { version = "0.15.0" }
-http = "1"
-leptos_icons = "0.3.1"
-console_log = "1.0.0"
-log = "0.4.22"
-icondata = "0.4.0"
-serde = { version = "1.0.215", features = ["derive"] }
-serde_json = { version = "1.0.133" }
-reqwest = { version = "0.12.2", default-features = false, features = [
-  "rustls-tls",
-  "json",
-] }
-openai = "1.0.0-alpha.16"
 anyhow = "1.0.79"
+log = "0.4.14"
+leptos_icons = "0.3.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.64"
+icondata = "0.5.0"
+http = "1"
 
 [features]
 ssr = [
@@ -43,6 +45,8 @@ ssr = [
   "dep:tower",
   "dep:tower-http",
   "dep:leptos_axum",
+  "dep:openai-api-rs",
+  "dep:dotenv",
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",
@@ -129,3 +133,15 @@ tailwind-input-file = "style/tailwind.css"
 # Optional, defaults to "tailwind.config.js" which if is not present
 # is generated for you
 tailwind-config-file = "tailwind.config.js"
+dotenv = { version = "0.15.0" }
+http = "1"
+leptos_icons = "0.3.1"
+console_log = "1.0.0"
+log = "0.4.22"
+icondata = "0.4.0"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = { version = "1.0.133" }
+reqwest = { version = "0.12.2", default-features = false, features = [
+  "rustls-tls",
+  "json",
+] }

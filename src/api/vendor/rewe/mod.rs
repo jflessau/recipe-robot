@@ -1,8 +1,9 @@
 mod model;
-use super::Ingredient;
-use super::{Item, Vendor};
-use anyhow::Result;
 use model::*;
+
+use super::*;
+
+use anyhow::Result;
 use reqwest;
 use serde::{Deserialize, Serialize};
 

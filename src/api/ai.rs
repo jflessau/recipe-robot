@@ -1,43 +1,35 @@
-use super::ingredient::{Ingredient, IngredientStatus};
-use anyhow::{bail, Context, Result};
-use openai::{
-    chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
-    completions::Completion,
-    set_base_url, set_key,
-};
-use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, warn};
+use super::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Ai {
     max_chars: i32,
-    messages: Vec<ChatCompletionMessage>,
+    // messages: Vec<ChatCompletionMessage>,
 }
 
 impl Ai {
     pub fn new(token: String, base_url: String, max_chars: i32) -> Self {
-        set_key(token);
-        set_base_url(base_url);
-
-        let messages = vec![ChatCompletionMessage {
-            role: ChatCompletionMessageRole::System,
-            content: Some(r#"
-                You are integrated into a recipe web app. Users enter recipes and you extract ingredients.
-                Then the app calls an API of a grocery store and tries to find matches for the ingredients.
-                You help to find the best match for the ingredients.
-                If not told otherwise, you assume the API is talking german.
-                You are agnostic to the recipe language.
-
-                The app is in the early stages of development and you are the first AI to be integrated into it.
-                Good luck!
-            "#.to_string()),
-            name: None,
-            function_call: None,
-        }];
+        // set_key(token);
+        // set_base_url(base_url);
+        //
+        // let messages = vec![ChatCompletionMessage {
+        //     role: ChatCompletionMessageRole::System,
+        //     content: Some(r#"
+        //         You are integrated into a recipe web app. Users enter recipes and you extract ingredients.
+        //         Then the app calls an API of a grocery store and tries to find matches for the ingredients.
+        //         You help to find the best match for the ingredients.
+        //         If not told otherwise, you assume the API is talking german.
+        //         You are agnostic to the recipe language.
+        //
+        //         The app is in the early stages of development and you are the first AI to be integrated into it.
+        //         Good luck!
+        //     "#.to_string()),
+        //     name: None,
+        //     function_call: None,
+        // }];
 
         Self {
             max_chars,
-            messages,
+            // messages,
         }
     }
 
@@ -58,26 +50,26 @@ impl Ai {
             )
         }
 
-        self.messages.push(ChatCompletionMessage {
-            role: ChatCompletionMessageRole::User,
-            content: Some(message),
-            name: None,
-            function_call: None,
-        });
-
-        let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", self.messages.clone())
-            .create()
-            .await
-            .context("failed to create chat completion")?;
-
-        let Some(response) = chat_completion.choices.first() else {
-            bail!("no response from ai")
-        };
-
-        let Some(message) = response.message.content.clone() else {
-            bail!("no message in response from ai")
-        };
-
+        // self.messages.push(ChatCompletionMessage {
+        //     role: ChatCompletionMessageRole::User,
+        //     content: Some(message),
+        //     name: None,
+        //     function_call: None,
+        // });
+        //
+        // let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", self.messages.clone())
+        //     .create()
+        //     .await
+        //     .context("failed to create chat completion")?;
+        //
+        // let Some(response) = chat_completion.choices.first() else {
+        //     bail!("no response from ai")
+        // };
+        //
+        // let Some(message) = response.message.content.clone() else {
+        //     bail!("no message in response from ai")
+        // };
+        //
         Ok(message)
     }
 
