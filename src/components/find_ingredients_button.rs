@@ -1,14 +1,6 @@
+use crate::api::get_ingredients;
 use crate::views::home::State;
 use leptos::*;
-
-#[server]
-pub async fn get_ingredients() -> Result<Vec<String>, ServerFnError> {
-    Ok(vec![
-        "Spaghetti".to_string(),
-        "Eggs".to_string(),
-        "Bacon".to_string(),
-    ])
-}
 
 #[component]
 pub fn FindIngredientsButton(

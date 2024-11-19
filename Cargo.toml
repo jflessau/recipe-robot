@@ -18,17 +18,25 @@ tower = { version = "0.4", optional = true, features = ["util"] }
 tower-http = { version = "0.5", features = ["fs"], optional = true }
 wasm-bindgen = "=0.2.95"
 thiserror = "1"
-tracing = { version = "0.1", optional = true }
+tracing = { version = "0.1" }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+dotenv = { version = "0.15.0" }
 http = "1"
 leptos_icons = "0.3.1"
 console_log = "1.0.0"
 log = "0.4.22"
 icondata = "0.4.0"
-serde = "1.0.215"
-serde_json = "1.0.133"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = { version = "1.0.133" }
+reqwest = { version = "0.12.2", default-features = false, features = [
+  "rustls-tls",
+  "json",
+] }
+openai = "1.0.0-alpha.16"
+anyhow = "1.0.79"
 
 [features]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 ssr = [
   "dep:axum",
   "dep:tokio",
@@ -38,8 +46,8 @@ ssr = [
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",
-  "dep:tracing",
 ]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
@@ -53,7 +61,7 @@ panic = "abort"
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
 output-name = "listoplate"
 
-# The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
+# The site root folder is where cargo-leptos generate all output.
 site-root = "target/site"
 
 # The site-root relative folder where all compiled output (JS, WASM and CSS) is written
