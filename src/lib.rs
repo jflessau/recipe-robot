@@ -1,9 +1,20 @@
-pub mod api;
+// frontend
+
 pub mod app;
 pub mod components;
 pub mod error_template;
 pub mod prelude;
 pub mod views;
+
+// backend
+
+#[cfg(feature = "ssr")]
+pub mod ai;
+pub mod api;
+#[cfg(feature = "ssr")]
+pub mod shopping_list;
+#[cfg(feature = "ssr")]
+pub mod vendor;
 
 #[cfg(feature = "ssr")]
 pub mod fileserv;

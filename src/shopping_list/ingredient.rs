@@ -1,4 +1,5 @@
-use super::*;
+use crate::prelude::*;
+use crate::vendor::Item;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Ingredient {
@@ -107,7 +108,7 @@ impl Display for IngredientStatus {
             IngredientStatus::AiSelectedInvalidItem { alternatives } => {
                 write!(
                     f,
-                    "🤖 ⚠️ {} items found, but AI fails to select one",
+                    "🤖 ⚠️ {} items found, but AI failed to select one",
                     alternatives.len()
                 )
             }

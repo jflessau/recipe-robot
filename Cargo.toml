@@ -12,7 +12,9 @@ reqwest = { version = "0.12.2", default-features = false, features = [
   "rustls-tls",
   "json",
 ] }
-openai-api-rs = { version = "5.2.1", features = ["rustls"], optional = true }
+openai-api-rs = { version = "5.2.1", features = [
+  "rustls",
+], default-features = false, optional = true }
 axum = { version = "0.7", optional = true }
 console_log = "1.0"
 console_error_panic_hook = "0.1"
@@ -45,8 +47,8 @@ ssr = [
   "dep:tower",
   "dep:tower-http",
   "dep:leptos_axum",
-  "dep:openai-api-rs",
   "dep:dotenv",
+  "dep:openai-api-rs",
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",

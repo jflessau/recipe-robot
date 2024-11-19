@@ -1,4 +1,12 @@
-use super::*;
+mod ingredient;
+
+use super::{
+    ai::Ai,
+    vendor::{Rewe, Vendor, VendorSelect},
+};
+pub use ingredient::{Ingredient, IngredientStatus};
+
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ShoppingList {
@@ -32,11 +40,11 @@ impl ShoppingList {
 
     pub async fn make_progress(&mut self) -> Result<()> {
         let vendor = match &self.vendor {
-            VendorSelect::Rewe { config } => vendor::Rewe::new(config.clone()).await,
+            VendorSelect::Rewe { config } => Rewe::new(config.clone()).await,
         };
 
         let Ok(vendor) = vendor else {
-            panic!("fails to talk to vendor, error: {vendor:#?}");
+            panic!("failed to talk to vendor, error: {vendor:#?}");
         };
 
         info!("🤖 list ingredients...");

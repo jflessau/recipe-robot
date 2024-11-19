@@ -1,9 +1,9 @@
 mod rewe;
 pub use rewe::{Rewe, ReweConfig};
 
-use super::*;
-
-use serde::{Deserialize, Serialize};
+use super::ai::Ai;
+use super::shopping_list::Ingredient;
+use crate::prelude::*;
 
 // const THEMES: [&str; 14] = [
 //     "organic",

@@ -1,4 +1,4 @@
-use crate::api::handler::get_ingredients;
+use crate::api::get_ingredients;
 use crate::views::home::State;
 use leptos::*;
 
