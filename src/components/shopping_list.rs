@@ -15,7 +15,15 @@ pub fn ShoppingList(ingredients: Vec<String>) -> impl IntoView {
             </div>
 
             <div class="w-full flex flex-col gap-2 items-center justify-start">
-                <ShoppingListItem />
+                <For
+                    each=move || ingredients.clone()
+                    key=|ingredient| ingredient.clone()
+                    children=move |ingredient| {
+                        view! {
+                            <ShoppingListItem title={ingredient} />
+                        }
+                    }
+                />
             </div>
         </div>
     }

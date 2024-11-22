@@ -1,6 +1,5 @@
 use crate::components::{
-    find_ingredients_button::FindIngredientsButton, loading_indicator::LoadingIndicator,
-    recipe_input::View as RecipeInput, reset_recipe_button::ResetRecipeButton,
+    loading_indicator::LoadingIndicator, recipe_input::View as RecipeInput,
     shopping_list::ShoppingList,
 };
 use crate::prelude::*;
@@ -104,11 +103,7 @@ impl State {
 #[component]
 pub fn View() -> impl IntoView {
     let (state, set_state) = create_signal(State::RecipeInput {
-        recipe_text: "".to_string(),
-    });
-
-    create_effect(move |_| {
-        log::info!("state: {:?}", state());
+        recipe_text: "init text".to_string(),
     });
 
     view! {
@@ -118,7 +113,6 @@ pub fn View() -> impl IntoView {
                 src="/img/logo.png"
                 alt="shopping bag with vegetables, fruits and beverages"
             />
-
             <h1 class="mb-6 text-m">"koch-doch-einfach.org"</h1>
 
             <div class="w-full flex flex-col items-center justify-start gap-12">
@@ -132,9 +126,8 @@ pub fn View() -> impl IntoView {
                                     </p>
 
                                     <button
-                                        on:click=move |_| set_state(State::ShoppingList {
-                                            recipe_text: "".to_string(),
-                                            ingredients: vec!["test".to_string()]
+                                        on:click=move |_| set_state(State::RecipeInput {
+                                            recipe_text: state().recipe_text(),
                                         })
                                         class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
                                     >
@@ -145,8 +138,7 @@ pub fn View() -> impl IntoView {
                             },
                             State::RecipeInput { recipe_text } => {
                                 view! {
-                                    <RecipeInput recipe_text set_state/>
-                                    <FindIngredientsButton state set_state/>
+                                    <RecipeInput set_state recipe_text />
                                 }.into_view()
                             },
                             State::FindIngredients { .. } => {

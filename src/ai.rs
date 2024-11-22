@@ -80,8 +80,8 @@ impl Ai {
 
     pub async fn get_ingredients(&mut self, recipe: &String) -> Result<Vec<Ingredient>> {
         let message = r#"
-            Extract the ingredients from the recipe.
-            Translate the ingredients to german and convert the amounts to metric.
+            Extract all ingredients from the recipe.
+            Translate the ingredients to german and convert the amounts to metric if necessary.
 
             The "name" will be used to search for an item in a grocery store API. So if e.g. the recipe says "diced onions", the ingredient name should be onion
             because "diced onions" is not a common grocery store item and won't work as a search term.
@@ -121,6 +121,8 @@ impl Ai {
             ))
             .await?;
 
+        info!("ai response: {response}");
+
         let ingredients: Vec<Ingredient> = serde_json::from_str(&response)?;
 
         Ok(ingredients)
@@ -128,13 +130,13 @@ impl Ai {
 
     pub async fn match_item(
         &self,
-        mut ingredient: Ingredient,
+        ingredient: &mut Ingredient,
         themes: &Vec<String>,
-    ) -> Result<Ingredient> {
+    ) -> Result<()> {
         // check if item list is empty
 
         if matches!(ingredient.status(), IngredientStatus::NoSearchResults) {
-            return Ok(ingredient);
+            return Ok(());
         }
 
         let IngredientStatus::SearchResults { ref items } = ingredient.status() else {
@@ -143,7 +145,7 @@ impl Ai {
 
         if items.is_empty() {
             ingredient.set_status(IngredientStatus::NoSearchResults);
-            return Ok(ingredient);
+            return Ok(());
         }
 
         // compose prompt
@@ -183,14 +185,13 @@ impl Ai {
         let response: IngredientItemMatch =
             serde_json::from_str(&response).context("failed to parse ai response")?;
 
-        // ckeck ai found a match
+        // ckeck if ai found a match
 
         let Some(index) = response.item_index else {
             ingredient.set_status(IngredientStatus::AiRefusedToSelectItem {
                 alternatives: items.clone(),
             });
-
-            return Ok(ingredient);
+            return Ok(());
         };
 
         // check if index of match is in range
@@ -199,8 +200,7 @@ impl Ai {
             ingredient.set_status(IngredientStatus::AiSelectedInvalidItem {
                 alternatives: items.clone(),
             });
-
-            return Ok(ingredient);
+            return Ok(());
         };
 
         // set item
@@ -211,7 +211,7 @@ impl Ai {
             alternatives: items.clone(),
         });
 
-        Ok(ingredient)
+        Ok(())
     }
 }
 

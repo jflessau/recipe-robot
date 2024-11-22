@@ -27,6 +27,14 @@ pub enum VendorSelect {
     Rewe { config: ReweConfig },
 }
 
+impl fmt::Display for VendorSelect {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VendorSelect::Rewe { config } => write!(f, "Rewe: {}", config.zip_code),
+        }
+    }
+}
+
 pub trait Vendor
 where
     Self: Sized,
@@ -43,10 +51,10 @@ where
 
     async fn match_item(
         &self,
-        ingredient: Ingredient,
+        ingredient: &mut Ingredient,
         themes: &Vec<String>,
         ai: &Ai,
-    ) -> Result<Ingredient> {
+    ) -> Result<()> {
         ai.match_item(ingredient, themes).await
     }
 }

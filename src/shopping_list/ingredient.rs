@@ -1,5 +1,8 @@
 use crate::prelude::*;
-use crate::vendor::Item;
+use crate::{
+    ai::Ai,
+    vendor::{Item, Rewe, Vendor, VendorSelect},
+};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Ingredient {
@@ -37,6 +40,48 @@ impl Ingredient {
             IngredientStatus::Matched { item, pieces, .. } => Some(item.price_total(*pieces)),
             _ => None,
         }
+    }
+
+    async fn find_at_vendor(
+        &mut self,
+        vendor_select: VendorSelect,
+        themes: &Vec<String>,
+        ai: &Ai,
+    ) -> Result<()> {
+        let vendor = match &vendor_select {
+            VendorSelect::Rewe { config } => Rewe::new(config.clone()).await,
+        };
+        let Ok(vendor) = vendor else {
+            bail!(
+                "failed to talk to vendor {}, error: {vendor:?}",
+                vendor_select
+            );
+        };
+
+        info!("🔍 search {} for ingredient {}", vendor.name(), self.name());
+
+        // list items at vendor
+
+        match vendor.search_for_items(self.clone()).await {
+            Err(err) => {
+                self.set_status(IngredientStatus::ApiSearchFailed {
+                    error: format!("{err:?}"),
+                });
+            }
+            Ok(items) => {
+                self.set_status(IngredientStatus::SearchResults { items });
+            }
+        };
+
+        // match results with ai
+
+        info!("🤖 using ai to match items");
+        vendor
+            .match_item(self, themes, ai)
+            .await
+            .context("failed to match item")?;
+
+        Ok(())
     }
 }
 

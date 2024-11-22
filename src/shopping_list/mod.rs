@@ -11,7 +11,7 @@ use crate::prelude::*;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ShoppingList {
     recipe: String,
-    ingredients: Option<Vec<Ingredient>>,
+    ingredients: Vec<Ingredient>,
     themes: Vec<String>,
 
     vendor: VendorSelect,
@@ -31,7 +31,7 @@ impl ShoppingList {
 
         Self {
             recipe,
-            ingredients: None,
+            ingredients: vec![],
             themes,
 
             vendor,
@@ -43,15 +43,7 @@ impl ShoppingList {
         }
     }
 
-    pub async fn make_progress(&mut self) -> Result<()> {
-        let vendor = match &self.vendor {
-            VendorSelect::Rewe { config } => Rewe::new(config.clone()).await,
-        };
-
-        let Ok(vendor) = vendor else {
-            panic!("failed to talk to vendor, error: {vendor:#?}");
-        };
-
+    pub async fn find_ingredients(&mut self) -> Result<()> {
         info!("🤖 list ingredients...");
         let ingredients = self
             .ai
@@ -59,55 +51,18 @@ impl ShoppingList {
             .await
             .context("failed to get ingredients")?;
 
-        info!(
-            "ingredients: {:?}",
-            ingredients
-                .iter()
-                .map(|i| i.name().clone())
-                .collect::<Vec<_>>()
-        );
+        self.ingredients = ingredients;
 
-        // search for items
+        self.total = self
+            .ingredients
+            .clone()
+            .iter()
+            .flat_map(|i| i.price_total())
+            .sum::<f32>();
 
-        let mut res = vec![];
-
-        for mut ingredient in ingredients {
-            info!(
-                "🔍 search {} for ingredient {}",
-                vendor.name(),
-                ingredient.name()
-            );
-
-            // get items
-
-            match vendor.search_for_items(ingredient.clone()).await {
-                Err(err) => {
-                    ingredient.set_status(IngredientStatus::ApiSearchFailed {
-                        error: format!("{err:?}"),
-                    });
-                }
-                Ok(items) => {
-                    ingredient.set_status(IngredientStatus::SearchResults { items });
-                }
-            };
-
-            // match items
-
-            info!("🤖 use ai to match items");
-            res.push(
-                vendor
-                    .match_item(ingredient, &self.themes, &self.ai)
-                    .await
-                    .context("failed to match item")?,
-            );
-        }
-
-        self.ingredients = Some(res.clone());
-
-        // calculate totals
-
-        self.total = res.iter().flat_map(|i| i.price_total()).sum::<f32>();
-        self.sub_total_without_at_home_items = res
+        self.sub_total_without_at_home_items = self
+            .ingredients
+            .clone()
             .iter()
             .filter(|i| !i.probably_at_home().unwrap_or(false))
             .flat_map(|i| i.price_total())
@@ -117,7 +72,7 @@ impl ShoppingList {
     }
 
     pub fn ingredients(&self) -> Vec<Ingredient> {
-        self.ingredients.clone().unwrap_or_default()
+        self.ingredients.clone()
     }
 }
 
@@ -128,12 +83,10 @@ impl Display for ShoppingList {
             "\ningredients: {}\n\n---------\ntotal: {:.2} €\ntotal without things you probaly have at home: {:.2} €",
             self.ingredients
                 .clone()
-                .map(|i| i
                     .iter()
                     .map(|i| format!("{}", i))
                     .collect::<Vec<_>>()
-                    .join("\n"))
-                .unwrap_or("none".to_string()),
+                    .join("\n"),
             self.total,
             self.sub_total_without_at_home_items
         )
