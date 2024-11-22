@@ -2,7 +2,7 @@ use crate::components::{
     loading_indicator::LoadingIndicator, recipe_input::View as RecipeInput,
     shopping_list::ShoppingList,
 };
-use crate::prelude::*;
+use crate::{prelude::*, shopping_list::Ingredient};
 
 #[derive(Debug, Clone)]
 pub enum State {
@@ -18,7 +18,7 @@ pub enum State {
     },
     ShoppingList {
         recipe_text: String,
-        ingredients: Vec<String>,
+        ingredients: Vec<Ingredient>,
     },
 }
 
@@ -47,7 +47,7 @@ impl State {
         }
     }
 
-    pub fn ingredients(&self) -> Option<&Vec<String>> {
+    pub fn ingredients(&self) -> Option<&Vec<Ingredient>> {
         match self {
             State::ShoppingList { ingredients, .. } => Some(ingredients),
             _ => None,
@@ -86,7 +86,7 @@ impl State {
         }
     }
 
-    pub fn set_ingredients(&mut self, ingredients: Vec<String>) -> Self {
+    pub fn set_ingredients(&mut self, ingredients: Vec<Ingredient>) -> Self {
         State::ShoppingList {
             recipe_text: self.recipe_text(),
             ingredients,
@@ -103,7 +103,7 @@ impl State {
 #[component]
 pub fn View() -> impl IntoView {
     let (state, set_state) = create_signal(State::RecipeInput {
-        recipe_text: "init text".to_string(),
+        recipe_text: "".to_string(),
     });
 
     view! {

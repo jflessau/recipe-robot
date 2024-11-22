@@ -4,7 +4,7 @@ use crate::{
     vendor::{Item, Rewe, Vendor, VendorSelect},
 };
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Ingredient {
     name: String,
     #[allow(dead_code)]
@@ -101,7 +101,7 @@ impl Display for Ingredient {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub enum IngredientStatus {
     #[default]
     Unchecked,

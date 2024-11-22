@@ -3,7 +3,6 @@ use crate::prelude::*;
 
 use openai::{
     chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
-    completions::Completion,
     set_base_url, set_key,
 };
 

@@ -1,8 +1,8 @@
 use crate::components::shopping_list_item::ShoppingListItem;
-use crate::prelude::*;
+use crate::{prelude::*, shopping_list::Ingredient};
 
 #[component]
-pub fn ShoppingList(ingredients: Vec<String>) -> impl IntoView {
+pub fn ShoppingList(ingredients: Vec<Ingredient>) -> impl IntoView {
     view! {
         <div class="w-full flex flex-col items-start justify-start gap-6">
             <div class="w-full flex flex-col justify-start items-center">
@@ -20,7 +20,7 @@ pub fn ShoppingList(ingredients: Vec<String>) -> impl IntoView {
                     key=|ingredient| ingredient.clone()
                     children=move |ingredient| {
                         view! {
-                            <ShoppingListItem title={ingredient} />
+                            <ShoppingListItem title={ingredient.name().to_string()} />
                         }
                     }
                 />

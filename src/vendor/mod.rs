@@ -59,7 +59,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct Item {
     name: String,
     quantity: Option<String>,

@@ -1,24 +1,14 @@
-use crate::prelude::*;
+use crate::{prelude::*, shopping_list::Ingredient};
 use leptos::{server, ServerFnError};
 
 #[server]
-pub async fn get_ingredients(recipe_text: String) -> Result<Vec<String>, ServerFnError> {
+pub async fn get_ingredients(recipe_text: String) -> Result<Vec<Ingredient>, ServerFnError> {
     use crate::shopping_list::ShoppingList;
-
-    info!("get_ingredients: recipe_text: {:?}", recipe_text);
 
     let mut shopping_list = ShoppingList::new(recipe_text, vec!["cheap".to_string()]);
 
     match shopping_list.find_ingredients().await {
-        Ok(_) => {
-            let ingredients = shopping_list
-                .ingredients()
-                .into_iter()
-                .map(|i| i.name().to_string())
-                .collect::<Vec<_>>();
-
-            Ok(ingredients)
-        }
+        Ok(_) => Ok(shopping_list.ingredients()),
         Err(e) => Err(ServerFnError::new(e.to_string())),
     }
 }
