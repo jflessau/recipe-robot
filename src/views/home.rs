@@ -2,7 +2,11 @@ use crate::components::{
     loading_indicator::LoadingIndicator, recipe_input::View as RecipeInput,
     shopping_list::ShoppingList,
 };
-use crate::{prelude::*, shopping_list::Ingredient};
+use crate::{
+    prelude::*,
+    shopping_list::{Ingredient, IngredientStatus},
+    vendor::Item,
+};
 
 #[derive(Debug, Clone)]
 pub enum State {
@@ -102,8 +106,124 @@ impl State {
 
 #[component]
 pub fn View() -> impl IntoView {
-    let (state, set_state) = create_signal(State::RecipeInput {
+    // let (state, set_state) = create_signal(State::RecipeInput {
+    //     recipe_text: "".to_string(),
+    // });
+
+    let (state, set_state) = create_signal(State::ShoppingList {
         recipe_text: "".to_string(),
+        ingredients: vec![
+            Ingredient {
+                id: Uuid::new_v4(),
+                name: "Magerquark".to_string(),
+                probably_at_home: Some(true),
+                unit: "Gram".to_string(),
+                quantity: 250,
+                status: IngredientStatus::Unchecked,
+            },
+            Ingredient {
+                id: Uuid::new_v4(),
+                name: "Butter".to_string(),
+                probably_at_home: Some(true),
+                unit: "Gram".to_string(),
+                quantity: 250,
+                status: IngredientStatus::ApiSearchFailed {
+                    error: "Die Anfrage an Rewe ist fehlgeschlagen".to_string(),
+                },
+            },
+            Ingredient {
+                id: Uuid::new_v4(),
+                name: "Butter".to_string(),
+                probably_at_home: Some(true),
+                unit: "Gram".to_string(),
+                quantity: 250,
+                status: IngredientStatus::NoSearchResults,
+            },
+            Ingredient {
+                id: Uuid::new_v4(),
+                name: "Butter".to_string(),
+                probably_at_home: Some(true),
+                unit: "Gram".to_string(),
+                quantity: 250,
+                status: IngredientStatus::SearchResults {
+                    items: vec![Item {
+                        id: Uuid::new_v4(),
+                        name: "Kerrygold".to_string(),
+                        quantity: Some("250 g".to_string()),
+                        price_cent: Some(150),
+                        url: Some("https://www.rewe.de/produkte/1234".to_string()),
+                        image_url: Some("https://www.rewe.de/produkte/1234/image.jpg".to_string()),
+                    }],
+                },
+            },
+            Ingredient {
+                id: Uuid::new_v4(),
+                name: "Butter".to_string(),
+                probably_at_home: Some(true),
+                unit: "Gram".to_string(),
+                quantity: 250,
+                status: IngredientStatus::AiFailsToSelectItem {
+                    alternatives: vec![Item {
+                        id: Uuid::new_v4(),
+                        name: "Kerrygold".to_string(),
+                        quantity: Some("250 g".to_string()),
+                        price_cent: Some(150),
+                        url: Some("https://www.rewe.de/produkte/1234".to_string()),
+                        image_url: Some("https://www.rewe.de/produkte/1234/image.jpg".to_string()),
+                    }],
+                },
+            },
+            Ingredient {
+                id: Uuid::new_v4(),
+                name: "Butter".to_string(),
+                probably_at_home: Some(true),
+                unit: "Gram".to_string(),
+                quantity: 250,
+                status: IngredientStatus::Matched {
+                    item: Item {
+                        id: Uuid::new_v4(),
+                        name: "Kerrygold".to_string(),
+                        quantity: Some("250 g".to_string()),
+                        price_cent: Some(150),
+                        url: Some("https://www.rewe.de/produkte/1234".to_string()),
+                        image_url: Some("https://jflessau.com/img/placeholder.jpg".to_string()),
+                    },
+                    pieces: 1,
+                    alternatives: vec![
+                        Item {
+                            id: Uuid::new_v4(),
+                            name: "Kerrygold".to_string(),
+                            quantity: Some("250 g".to_string()),
+                            price_cent: Some(350),
+                            url: Some("https://www.rewe.de/produkte/1234".to_string()),
+                            image_url: Some(
+                                "https://www.rewe.de/produkte/1234/image.jpg".to_string(),
+                            ),
+                        },
+                        Item {
+                            id: Uuid::new_v4(),
+                            name: "Kerrygold ungesalzen".to_string(),
+                            quantity: Some("250 g".to_string()),
+                            price_cent: Some(450),
+                            url: Some("https://www.rewe.de/produkte/1234".to_string()),
+                            image_url: Some(
+                                "https://www.rewe.de/produkte/1234/image.jpg".to_string(),
+                            ),
+                        },
+                        Item {
+                            id: Uuid::new_v4(),
+                            name: "Markenbutter".to_string(),
+                            quantity: Some("250 g".to_string()),
+                            price_cent: Some(550),
+                            url: Some("https://www.rewe.de/produkte/1234".to_string()),
+                            image_url: Some(
+                                "https://www.rewe.de/produkte/1234/image.jpg".to_string(),
+                            ),
+                        },
+                    ],
+                },
+            },
+        ],
     });
 
     view! {
@@ -116,54 +236,54 @@ pub fn View() -> impl IntoView {
             <h1 class="mb-6 text-m">"koch-doch-einfach.org"</h1>
 
             <div class="w-full flex flex-col items-center justify-start gap-12">
-                {
-                    move || {
-                        match state() {
-                            State::Error { error, .. } => {
-                                view! {
-                                    <p class="w-full text-center font-bold text-error">
-                                        {error.clone()}
-                                    </p>
+                {move || {
+                    match state() {
+                        State::Error { error, .. } => {
+                            view! {
+                                <p class="w-full text-center font-bold text-error">
+                                    {error.clone()}
+                                </p>
 
-                                    <button
-                                        on:click=move |_| set_state(State::RecipeInput {
-                                            recipe_text: state().recipe_text(),
-                                        })
-                                        class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
-                                    >
-                                        <Icon icon=i::TbArrowLoopLeft2 width="0.9rem" height="0.9rem"/>
-                                        "Nochmal versuchen"
-                                    </button>
-                                }.into_view()
-                            },
-                            State::RecipeInput { recipe_text } => {
-                                view! {
-                                    <RecipeInput set_state recipe_text />
-                                }.into_view()
-                            },
-                            State::FindIngredients { .. } => {
-                                view! {
-                                    <LoadingIndicator
-                                        title="Ermittle Zutaten...".to_string()
-                                        subtitle="Ich geb mir große Mühe!".to_string() />
-                                }.into_view()
-                            },
-                            State::ShoppingList { ingredients, .. } => {
-                                view! {
-                                    <button
-                                        on:click=move |_| set_state(state().reset())
-                                        class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
-                                    >
-                                        <Icon icon=i::LuFileEdit width="0.9rem" height="0.9rem"/>
-                                        "Rezept ändern"
-                                    </button>
+                                <button
+                                    on:click=move |_| set_state(State::RecipeInput {
+                                        recipe_text: state().recipe_text(),
+                                    })
+                                    class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
+                                >
+                                    <Icon icon=i::TbArrowLoopLeft2 width="0.9rem" height="0.9rem" />
+                                    "Nochmal versuchen"
+                                </button>
+                            }
+                                .into_view()
+                        }
+                        State::RecipeInput { recipe_text } => {
+                            view! { <RecipeInput set_state recipe_text /> }.into_view()
+                        }
+                        State::FindIngredients { .. } => {
+                            view! {
+                                <LoadingIndicator
+                                    title="Ermittle Zutaten...".to_string()
+                                    subtitle="Ich geb mir große Mühe!".to_string()
+                                />
+                            }
+                                .into_view()
+                        }
+                        State::ShoppingList { ingredients, .. } => {
+                            view! {
+                                <button
+                                    on:click=move |_| set_state(state().reset())
+                                    class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
+                                >
+                                    <Icon icon=i::LuFileEdit width="0.9rem" height="0.9rem" />
+                                    "Rezept ändern"
+                                </button>
 
-                                    <ShoppingList ingredients />
-                                }.into_view()
-                            },
+                                <ShoppingList ingredients />
+                            }
+                                .into_view()
                         }
                     }
-                }
+                }}
             </div>
         </div>
     }

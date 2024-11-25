@@ -1,74 +1,48 @@
 mod rewe;
 pub use rewe::{Rewe, ReweConfig};
 
-use super::ai::Ai;
-use super::shopping_list::Ingredient;
+use super::shopping_list::{Ingredient, IngredientStatus};
 use crate::prelude::*;
 
-// const THEMES: [&str; 14] = [
-//     "organic",
-//     "cheap",
-//     "regional",
-//     "vegan",
-//     "vegetarian",
-//     "gluten-free",
-//     "lactose-free",
-//     "sugar-free",
-//     "low-carb",
-//     "low-fat",
-//     "low-salt",
-//     "low-calorie",
-//     "high-protein",
-//     "high-fiber",
-// ];
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum VendorSelect {
+pub enum Vendor {
     Rewe { config: ReweConfig },
 }
 
-impl fmt::Display for VendorSelect {
+impl fmt::Display for Vendor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            VendorSelect::Rewe { config } => write!(f, "Rewe: {}", config.zip_code),
+            Vendor::Rewe { config } => write!(f, "Rewe: {}", config.zip_code),
         }
     }
 }
 
-pub trait Vendor
-where
-    Self: Sized,
-{
-    type Config;
-
-    async fn new(config: Self::Config) -> Result<Self>;
-
-    fn name(&self) -> String;
-
-    async fn search_for_items(&self, ingredient: Ingredient) -> Result<Vec<Item>>;
-
-    // automatically implemented
-
-    async fn match_item(
-        &self,
-        ingredient: &mut Ingredient,
-        themes: &Vec<String>,
-        ai: &Ai,
-    ) -> Result<()> {
-        ai.match_item(ingredient, themes).await
+impl Vendor {
+    pub async fn find_items(&self, ingredient: &mut Ingredient) -> Result<(), String> {
+        match self {
+            Vendor::Rewe { config } => {
+                let rewe = Rewe::new(config.clone());
+                rewe.find_items(ingredient).await
+            }
+        }
     }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct Item {
-    name: String,
-    quantity: Option<String>,
-    price_cent: Option<usize>,
-    url: Option<String>,
-    image_url: Option<String>,
+    pub id: Uuid,
+    pub name: String,
+    pub quantity: Option<String>,
+    pub price_cent: Option<usize>,
+    pub url: Option<String>,
+    pub image_url: Option<String>,
 }
 
 impl Item {
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
     pub fn name(&self) -> String {
         self.name.clone()
     }
@@ -93,5 +67,13 @@ impl Item {
 
     pub fn price_total_string(&self, pieces: usize) -> String {
         format!("{:.2}", self.price_total(pieces))
+    }
+
+    pub fn url(&self) -> Option<String> {
+        self.url.clone()
+    }
+
+    pub fn image_url(&self) -> Option<String> {
+        self.image_url.clone()
     }
 }

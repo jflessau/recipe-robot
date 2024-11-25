@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use http::status::StatusCode;
 use leptos::*;
 use thiserror::Error;
@@ -35,7 +36,7 @@ pub fn ErrorTemplate(
         .into_iter()
         .filter_map(|(_k, v)| v.downcast_ref::<AppError>().cloned())
         .collect();
-    println!("Errors: {errors:#?}");
+    error!("Errors: {errors:#?}");
 
     #[cfg(feature = "ssr")]
     {

@@ -3,6 +3,7 @@ use crate::{api::*, prelude::*, views::home::State};
 #[component]
 pub fn View(set_state: WriteSignal<State>, recipe_text: String) -> impl IntoView {
     let (text, set_text) = create_signal(recipe_text.clone());
+    let (loading, set_loading) = create_signal(false);
 
     view! {
         <div class="w-full flex flex-col gap-6">
@@ -22,33 +23,59 @@ pub fn View(set_state: WriteSignal<State>, recipe_text: String) -> impl IntoView
             }
         </div>
 
-        <div class="w-full flex flex-col justify-start items-center gap-6">
-            <button
-                on:click=move |_| {
-                    let text = text.get_untracked();
-                    info!("find_ingredients: recipe_text: {:?}", text);
-                    spawn_local(async move {
-                        match get_ingredients(text.clone()).await {
-                            Err(err) => {
-                                set_state.set(State::Error {
-                                    recipe_text: text,
-                                    error: err.to_string(),
+        {move || {
+            if !text().is_empty() {
+                view! {
+                    <div class="w-full flex flex-col justify-start items-center gap-6">
+                        <button
+                            disabled=move || text().is_empty() || loading()
+                            on:click=move |_| {
+                                let text = text.get_untracked();
+                                info!("find_ingredients: recipe_text: {:?}", text);
+                                spawn_local(async move {
+                                    set_loading.set(true);
+                                    set_state
+                                        .set(State::FindIngredients {
+                                            recipe_text: text.clone(),
+                                        });
+                                    match get_ingredients(text.clone()).await {
+                                        Err(err) => {
+                                            set_loading.set(false);
+                                            set_state
+                                                .set(State::Error {
+                                                    recipe_text: text,
+                                                    error: err.to_string(),
+                                                });
+                                        }
+                                        Ok(ingredients) => {
+                                            set_loading.set(false);
+                                            set_state
+                                                .set(State::ShoppingList {
+                                                    recipe_text: text,
+                                                    ingredients,
+                                                });
+                                        }
+                                    }
                                 });
-                            },
-                            Ok(ingredients) => {
-                                set_state.set(State::ShoppingList {
-                                    recipe_text: text,
-                                    ingredients,
-                                });
-                            },
-                        }
-                    });
+                            }
+
+                            class="fancy flex items-center"
+                        >
+                            {move || {
+                                if loading() {
+                                    view! { "Lade..." }
+                                } else {
+                                    view! { "Im Supermarkt nach Zutaten suchen!" }
+                                }
+                            }}
+
+                        </button>
+                    </div>
                 }
-
-                class="fancy flex items-center">
-                Finde die Zutaten für mich bei Rewe!
-            </button>
-        </div>
-
+                    .into_view()
+            } else {
+                ().into_view()
+            }
+        }}
     }
 }

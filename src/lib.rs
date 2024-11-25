@@ -8,7 +8,6 @@ pub mod views;
 
 // backend
 
-pub mod ai;
 pub mod api;
 pub mod shopping_list;
 pub mod vendor;

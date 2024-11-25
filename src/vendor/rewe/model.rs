@@ -2,10 +2,11 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Product {
+    #[serde(rename = "productId")] //
+    pub id: String,
     pub name: String,
     pub price: usize,
     pub grammage: String,
-    pub url: String,
     pub image: String,
 }
 

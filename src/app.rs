@@ -19,6 +19,7 @@ pub fn app() -> impl IntoView {
             href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap"
             rel="stylesheet"
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         <Router fallback=|| {
             let mut outside_errors = Errors::default();
