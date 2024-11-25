@@ -31,7 +31,6 @@ pub fn View(set_state: WriteSignal<State>, recipe_text: String) -> impl IntoView
                             disabled=move || text().is_empty() || loading()
                             on:click=move |_| {
                                 let text = text.get_untracked();
-                                info!("find_ingredients: recipe_text: {:?}", text);
                                 spawn_local(async move {
                                     set_loading.set(true);
                                     set_state

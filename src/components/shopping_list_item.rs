@@ -12,10 +12,7 @@ pub fn ShoppingListItem(ingredient: Ingredient) -> impl IntoView {
     let (show_more, set_show_more) = create_signal(HashSet::<String>::new());
 
     create_resource(ingredient, move |ingredient| async move {
-        log::info!("check if ingredient request is required");
-
         if let IngredientStatus::Unchecked = ingredient.status() {
-            log::info!("fire ingredient request");
             let res = get_item_from_vendor(
                 ingredient.clone(),
                 Vendor::Rewe {
@@ -26,7 +23,6 @@ pub fn ShoppingListItem(ingredient: Ingredient) -> impl IntoView {
 
             match res {
                 Ok(ingredient) => {
-                    log::info!("got item from vendor: {:?}", ingredient);
                     set_ingredient(ingredient);
                 }
                 Err(e) => {
@@ -210,7 +206,6 @@ pub fn ShoppingListItem(ingredient: Ingredient) -> impl IntoView {
                                     <button
                                         class="py-2 flex justify-center items-center clickable"
                                         on:click=move |_| {
-                                            log::info!("increment pieces");
                                             set_pieces(pieces.saturating_add(1));
                                         }
                                     >
@@ -227,7 +222,6 @@ pub fn ShoppingListItem(ingredient: Ingredient) -> impl IntoView {
                                     <button
                                         class="py-2 flex justify-center items-center clickable"
                                         on:click=move |_| {
-                                            log::info!("increment pieces");
                                             set_pieces(pieces.saturating_sub(1));
                                         }
                                     >

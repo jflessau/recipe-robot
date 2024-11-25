@@ -19,7 +19,7 @@ pub fn ShoppingList(ingredients: Vec<Ingredient>) -> impl IntoView {
                         view! {
                             <div class="w-full flex flex-col justify-start items-start gap-2">
                                 <p class="text-s w-full text-center leading-normal">
-                                    Diese Zutaten hast du wahrscheinlich schon zu Hause. Klicke sie an um sie zu entfernen:
+                                    Diese Zutaten hast du vielleicht schon zu Hause. Klicke sie an um sie zu entfernen:
                                 </p>
                                 <div class="w-full flex flex-row gap-2 flex-wrap justify-center">
                                     <For

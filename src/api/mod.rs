@@ -19,8 +19,6 @@ pub async fn get_ingredients(recipe_text: String) -> Result<Vec<Ingredient>, Ser
         return Err(ServerFnError::new("Die AI konnte keine Zutaten finden."));
     };
 
-    info!("found ingredients: {:#?}", ingredients);
-
     Ok(ingredients)
 }
 

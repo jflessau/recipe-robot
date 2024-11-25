@@ -17,7 +17,7 @@ pub struct Ai {
 #[cfg(feature = "ssr")]
 impl Ai {
     pub fn new() -> Self {
-        Self { max_chars: 8_192 }
+        Self { max_chars: 16_000 }
     }
 
     async fn ask<M: AsRef<str>>(&self, message: M) -> Result<String> {
@@ -66,7 +66,8 @@ impl Ai {
         });
 
         let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", messages.clone())
-            .model("gpt-4o")
+            // .model("gpt-4o")
+            .model("gpt-4o-mini")
             .create()
             .await
             .context("failed to create chat completion")?;
@@ -124,8 +125,11 @@ impl Ai {
             ))
             .await?;
 
-        match serde_json::from_str(&response) {
-            Ok(ingredients) => Ok(ingredients),
+        match serde_json::from_str::<Vec<Ingredient>>(&response) {
+            Ok(mut ingredients) => {
+                ingredients.iter_mut().for_each(|i| i.enrich());
+                Ok(ingredients)
+            }
             Err(e) => {
                 error!("failed to parse ai response: {}, error: {}", response, e);
                 bail!("failed to parse ai response")

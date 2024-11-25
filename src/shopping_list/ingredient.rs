@@ -75,6 +75,14 @@ impl Ingredient {
             }
         }
     }
+
+    pub fn enrich(&mut self) {
+        self.name = INGREDIENT_NAME_MAPPINGS
+            .iter()
+            .find(|(n, _)| n == &self.name)
+            .map(|(_, m)| m.to_string())
+            .unwrap_or_else(|| self.name.clone());
+    }
 }
 
 impl Display for Ingredient {
@@ -144,3 +152,10 @@ impl Display for IngredientStatus {
         }
     }
 }
+
+const INGREDIENT_NAME_MAPPINGS: &[(&str, &str)] = &[
+    ("Mehl", "Weizenmehl"),
+    ("Zucker", "Weißer Zucker"),
+    ("Salz", "Speisesalz"),
+    ("Ei", "Eier"),
+];

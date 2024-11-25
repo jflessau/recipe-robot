@@ -26,8 +26,17 @@ impl Rewe {
 
         let client = reqwest::Client::new();
         let res = client
-            .request(reqwest::Method::GET, "https://shop.rewe.de/api/suggestions")
-            .query(&[("q", &ingredient.name())])
+            .request(reqwest::Method::GET, "https://shop.rewe.de/api/products")
+            .query(&[
+                ("objectsPerPage", "16"),
+                ("page", "1"),
+                ("search", &ingredient.name()),
+                ("sorting", "RELEVANCE_DESC"),
+                ("serviceTypes", "PICKUP"),
+                ("market", "540528"),
+                ("debug", "false"),
+                ("autocorrect", "true"),
+            ])
             .send()
             .await;
 
@@ -45,7 +54,7 @@ impl Rewe {
 
         // deserialize response
 
-        let res = res.json::<ProductListing>().await;
+        let res = res.json::<ProductSearchResult>().await;
         let Ok(res) = res else {
             error!(
                 "failed to search rewe for items {}, deserializing failed, error: {:?}",
@@ -58,22 +67,26 @@ impl Rewe {
             return Err("Die Antwort von Rewe konnte nicht verarbeitet werden.".to_string());
         };
 
-        info!(
-            "searched rewe for items ingredient: {}, res {:#?}",
-            ingredient.name(),
-            res
-        );
-
         let items = res
             .products
+            .products
             .into_iter()
-            .map(|p| Item {
-                id: Uuid::new_v4(),
-                name: p.name.clone(),
-                quantity: Some(p.grammage),
-                price_cent: Some(p.price),
-                url: Some(format!("https://www.rewe.de/produkte/{}", p.id)),
-                image_url: Some(p.image),
+            .map(|p| {
+                let pricing = p
+                    .meta
+                    .articles
+                    .into_iter()
+                    .next()
+                    .map(|a| a.article.listing.pricing);
+
+                Item {
+                    id: Uuid::new_v4(),
+                    name: p.name.clone(),
+                    quantity: pricing.clone().map(|p| p.grammage),
+                    price_cent: pricing.clone().map(|p| p.current_retail_price),
+                    url: Some(format!("https://www.rewe.de/produkte/{}", p.id)),
+                    image_url: p.media.images.into_iter().next().map(|i| i.links.link.href),
+                }
             })
             .collect::<Vec<_>>();
 
