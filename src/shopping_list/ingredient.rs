@@ -155,7 +155,7 @@ impl Display for IngredientStatus {
 
 const INGREDIENT_NAME_MAPPINGS: &[(&str, &str)] = &[
     ("Mehl", "Weizenmehl"),
-    ("Zucker", "Weißer Zucker"),
+    ("Zucker", "Zucker"),
     ("Salz", "Speisesalz"),
     ("Ei", "Eier"),
 ];

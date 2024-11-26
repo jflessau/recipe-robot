@@ -233,7 +233,7 @@ pub fn View() -> impl IntoView {
                 src="/img/logo.png"
                 alt="shopping bag with vegetables, fruits and beverages"
             />
-            <h1 class="mb-6 text-m">"koch-doch-einfach.org"</h1>
+            // <h1 class="mb-6 text-m">"koch-doch-einfach.org"</h1>
 
             <div class="w-full flex flex-col items-center justify-start gap-12">
                 {move || {

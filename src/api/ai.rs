@@ -45,14 +45,10 @@ impl Ai {
         let mut messages = vec![ChatCompletionMessage {
             role: ChatCompletionMessageRole::System,
             content: Some(r#"
-                You are integrated into a recipe web app. Users enter recipes and you extract ingredients.
-                Then the app calls an API of a grocery store and tries to find matches for the ingredients.
-                You help to find the best match for the ingredients.
-                If not told otherwise, you assume the API is talking german.
-                You are agnostic to the recipe language.
-
-                The app is in the early stages of development and you are the first AI to be integrated into it.
-                Good luck!
+                Du bist in eine Rezept-Webanwendung integriert. Benutzer geben Rezepte ein, und du extrahierst die Zutaten.
+                Anschließend ruft die App eine API eines Lebensmittelgeschäfts auf und versucht, passende Zutaten zu finden.
+                Du hilfst dabei, die beste Übereinstimmung für die Zutaten zu finden.
+                Du kennst dich sehr gut mit Lebensmitteln aus und kannst die besten Artikel für die Zutaten auswählen.
             "#.to_string()),
             name: None,
             function_call: None,
@@ -88,19 +84,19 @@ impl Ai {
             Extrahiere alle Zutaten aus dem Rezept.
             Übersetze die Zutaten ins Deutsche, wenn nötig.
 
-            "name" wird verwendet, um einen Artikel in einer API für Lebensmittelgeschäfte zu suchen. Wenn z. B. im Rezept „gewürfelte Zwiebeln“ steht, sollte der Zutatenname „Zwiebel“ sein, da „gewürfelte Zwiebeln“ kein gängiger Artikel in einem Lebensmittelgeschäft ist und als Suchbegriff nicht funktioniert. Der „name“ sollte korrekt großgeschrieben werden, z. B. „Zwiebel“.
+            "name" wird verwendet, um einen Artikel in einer API für Lebensmittelgeschäfte zu suchen. Wenn z. B. im Rezept „gewürfelte Zwiebeln“ steht, sollte der Zutatenname „Zwiebel“ sein, da „gewürfelte Zwiebeln“ kein gängiger Artikel in einem Lebensmittelgeschäft ist und als Suchbegriff nicht funktioniert.
+            „name“ sollte korrekt großgeschrieben werden, z. B. „Zwiebel“.
             Wenn im Rezept z. B. „Eier“ erwähnt werden und die Art des Eis (Huhn, Wachtel, etc.) nicht angegeben ist, gehe von der häufigsten Art aus und wähle den besten Suchbegriff dafür.
             Wenn die Zutat z. B. „extra natives Olivenöl“ ist, sollte der Zutatenname „Olivenöl“ lauten, um die Chancen zu erhöhen, dass es über die API gefunden wird.
             Wenn der Name der Zutat vage ist, z. B. „Curry“, verwende die angegebene Menge, um zu bestimmen, was gemeint ist. Für 1 TL Curry wäre z. B. der beste Suchbegriff „Currypulver“, nicht nur „Curry“, da letzteres zu vage ist und Ergebnisse wie Currypaste liefern könnte.
-            Falls dieselbe Zutat mehrfach erwähnt wird, z. B. für Teig und Sauce, für die Zubereitung und Garnitur usw., dann kombiniere sie zu einer Zutat und fasse die Mengen zusammen.
-
+            Falls dieselbe Zutat mehrfach erwähnt wird, z. B. für Teig und Sauce, dann liste sie nur einmal und addiere die Mengen.
 
             Für "unit" sind einzig und allein diese werte zulässig: "Gramm", "Kilogramm", "Milliliter", "Liter", "Stück".
             "quantity" gibt die Menge der Zutat in der Einheit an. Nur ganze Zahlen sind zulässig.
-            Rechne "unit" und "quantity" entsprechend um, fall die angegebene einheit nicht in der liste der zulässigen einheiten ist.
+            Rechne "unit" und "quantity" entsprechend um, fall die im Rezept angegebene einheit nicht in der liste der zulässigen einheiten ist.
             
             Wenn die Zutat sehr wahrscheinlich in einem normalen Haushalt vorhanden ist, setze "probably_at_home" auf „true“.
-            Beispiele dafür sind Pfeffer, Salz, Zucker, Wasser, Eiswürfel usw. Aber Dinge wie Safran, Trüffel, Eier, Milch usw. gehören nicht dazu.
+            Beispiele dafür sind Pfeffer, Salz, Zucker, Wasser, Eiswürfel usw.
 
             Antwort im folgenden Format, damit die Antwort geparst werden kann. Verzichte auf backticks oder andere formatierung.
 
@@ -137,11 +133,7 @@ impl Ai {
         }
     }
 
-    pub async fn match_item(
-        &self,
-        ingredient: &mut Ingredient,
-        themes: &Vec<String>,
-    ) -> Result<()> {
+    pub async fn match_item(&self, ingredient: &mut Ingredient) -> Result<()> {
         // check if item list is empty
 
         if matches!(ingredient.status(), IngredientStatus::NoSearchResults) {
@@ -160,21 +152,13 @@ impl Ai {
         // compose prompt
 
         let prompt = r#"
-            Ich gebe dir eine Liste von Zutaten für ein Rezept.
+            Ich gebe dir eine Zutat (Ingredient) für ein Rezept.
             Jede Zutat hat eine Liste von Artikelkandidaten. Diese Artikel stammen aus der API eines Supermarktes.
-            Ich möchte, dass du den besten Artikel für jede Zutat auswählst.
+            Ich möchte, dass du den besten Artikel für die Zutat auswählst.
 
-            item_index ist der Index des Artikels in der Liste der Artikelkandidaten.
+            item_index ist der Index des Artikels in der
             pieces_required gibt an, wie oft der Artikel gekauft werden muss. Wenn das Rezept z. B. 2,5 Liter Milch verlangt und der ausgewählte Artikel 1 Liter Milch umfasst, musst du pieces_required auf 3 setzen.
-            Bei der Auswahl des besten Kandidaten versuche, die überschüssige Menge so gering wie möglich zu halten, und passe pieces_required entsprechend an.
 
-            Beachte dabei Folgendes:
-
-            Wenn das Rezept z. B. 200 g Olivenöl angibt und die Artikelkandidaten in Litern gemessen werden, konvertiere die Einheiten.
-            Konvertiere auch Einheiten wie TL (Teelöffel), EL (Esslöffel), um sie vergleichen zu können.
-            Leite die Bedeutung von Abkürzungen wie EL, TL usw. aus dem Kontext ab.
-
-            Berücksichtige außerdem vom Benutzer ausgewählte Themen wie „bio“, „günstig“, „regional“ usw., falls solche angegeben sind bei der Suche nach dem besten Artikel.
             Falls es keine Übereinstimmung für die Zutat gibt, setze item_index auf null.
 
             Antwort im folgenden Format, damit die Antwort geparst werden kann. Verzichte auf backticks oder andere formatierung.
@@ -184,7 +168,10 @@ impl Ai {
                 "pieces_required": 1
             }
         "#;
-        let prompt = format!("{prompt}\n\n{themes:?}\n\n, Ingredient: {ingredient:?}");
+        let prompt = format!(
+            "{prompt}n\n, Zutat: {}\n\nArtikel aus dem Supermakrt: {:?}",
+            ingredient.name, items
+        );
 
         // ask ai
 

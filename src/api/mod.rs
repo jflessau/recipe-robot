@@ -30,10 +30,7 @@ pub async fn get_item_from_vendor(
     let mut ingredient = ingredient.clone();
     let _r = vendor.find_items(&mut ingredient).await;
     let ai = Ai::new();
-    match ai
-        .match_item(&mut ingredient, &vec!["cheap".to_string()])
-        .await
-    {
+    match ai.match_item(&mut ingredient).await {
         Ok(_) => {}
         Err(e) => {
             error!("failed to match item: {:?}", e);
