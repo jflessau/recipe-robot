@@ -58,7 +58,7 @@ pub fn View(set_state: WriteSignal<State>, recipe_text: String) -> impl IntoView
                                 });
                             }
 
-                            class="fancy flex items-center"
+                            class="fancy"
                         >
                             {move || {
                                 if loading() {

@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  surreal:
+    image: surrealdb/surrealdb
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./db_data/content:/data/
+    command: [
+        "start",
+        # "-h",
+        "--username",
+        "listoplate",
+        "--password",
+        "muchsecret",
+        "--strict",
+        "file:/data/database",
+      ]

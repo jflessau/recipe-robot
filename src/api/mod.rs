@@ -1,16 +1,25 @@
 mod ai;
+mod auth;
+
+pub use auth::{join, login, logout};
+
+#[cfg(feature = "ssr")]
+pub use auth::Claims;
 
 use crate::{prelude::*, shopping_list::Ingredient, vendor::Vendor};
+use leptos::{server, ServerFnError};
 
 #[cfg(feature = "ssr")]
 use crate::shopping_list::ShoppingList;
-
 #[cfg(feature = "ssr")]
 use ai::Ai;
-use leptos::{server, ServerFnError};
 
 #[server]
 pub async fn get_ingredients(recipe_text: String) -> Result<Vec<Ingredient>, ServerFnError> {
+    let user_id = expect_context::<Option<Uuid>>();
+
+    info!("user_id: {:?}", user_id);
+
     let shopping_list = ShoppingList::new(recipe_text);
 
     let ai = Ai::new();

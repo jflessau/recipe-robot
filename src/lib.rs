@@ -15,6 +15,16 @@ pub mod vendor;
 #[cfg(feature = "ssr")]
 pub mod fileserv;
 
+#[cfg(feature = "ssr")]
+use surrealdb::{engine::any::Any, Surreal};
+
+#[cfg(feature = "ssr")]
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub db: Surreal<Any>,
+    pub jwt_secret: String,
+}
+
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {

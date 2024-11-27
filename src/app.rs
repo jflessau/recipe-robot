@@ -1,6 +1,6 @@
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::prelude::*;
-use crate::views::home;
+use crate::views::{home, join, login, logout};
 
 use leptos_meta::*;
 use leptos_router::*;
@@ -48,6 +48,9 @@ pub fn app() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="" view=home::View />
+                    <Route path="/join" view=join::View />
+                    <Route path="/login" view=login::View />
+                    <Route path="/logout" view=logout::View />
                 </Routes>
             </main>
         </Router>
