@@ -15,8 +15,8 @@ Here is what it can do for you:
 - [x] Accept invite
 - [x] User Login
 - [x] User Logout
-- [ ] Auth wrapper for views
-- [] Submit recipe
-- [] Search for items matching an ingredient
-- [] Bookkeeping of AI costs
-- [] Generate invites based on current costs
+- [x] Auth wrapper for views
+- [ ] Submit recipe
+- [ ] Search for items matching an ingredient
+- [ ] Bookkeeping of AI costs
+- [ ] Generate invites based on current costs

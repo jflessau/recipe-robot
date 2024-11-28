@@ -1,3 +1,5 @@
+#[cfg(feature = "ssr")]
+use crate::AppState;
 use crate::{prelude::*, shopping_list::Ingredient, vendor::Vendor};
 use leptos::{server, ServerFnError};
 
@@ -6,13 +8,17 @@ use super::ai::Ai;
 #[cfg(feature = "ssr")]
 use crate::shopping_list::ShoppingList;
 
+#[cfg(feature = "ssr")]
+use super::db::{AuthenticatedUser, User};
+
 #[server]
 pub async fn get_ingredients(recipe_text: String) -> Result<Vec<Ingredient>, ServerFnError> {
-    let user_id = expect_context::<Option<Uuid>>();
+    let state = expect_context::<AppState>();
+    let Some(user) = expect_context::<Option<AuthenticatedUser>>() else {
+        return Err(ServerFnError::new("unauthorized"));
+    };
 
-    info!("user_id: {:?}", user_id);
-
-    let shopping_list = ShoppingList::new(recipe_text);
+    let shopping_list = ShoppingList::new(recipe_text.clone());
 
     let ai = Ai::new();
 
@@ -20,7 +26,13 @@ pub async fn get_ingredients(recipe_text: String) -> Result<Vec<Ingredient>, Ser
         return Err(ServerFnError::new("Die AI konnte keine Zutaten finden."));
     };
 
-    Ok(ingredients)
+    match User::submit_recipe(state.db, user.username, recipe_text, ingredients.clone()).await {
+        Ok(_) => Ok(ingredients),
+        Err(e) => {
+            error!("failed to submit recipe: {:?}", e);
+            return Err(ServerFnError::new("failed to submit recipe"));
+        }
+    }
 }
 
 #[server]

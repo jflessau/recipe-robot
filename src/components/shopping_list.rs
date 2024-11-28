@@ -15,7 +15,7 @@ pub fn ShoppingList(ingredients: Vec<Ingredient>) -> impl IntoView {
         view! {
             <div class="w-full flex flex-col items-start justify-start gap-6">
                 {move || {
-                    if ingredients().iter().any(|i| i.probably_at_home().unwrap_or_default()) {
+                    if ingredients().iter().any(|i| i.probably_at_home()) {
                         view! {
                             <div class="w-full flex flex-col justify-start items-start gap-2">
                                 <p class="text-s w-full text-center leading-normal">
@@ -24,9 +24,7 @@ pub fn ShoppingList(ingredients: Vec<Ingredient>) -> impl IntoView {
                                 <div class="w-full flex flex-row gap-2 flex-wrap justify-center">
                                     <For
                                         each=move || {
-                                            ingredients()
-                                                .into_iter()
-                                                .filter(|i| i.probably_at_home().unwrap_or_default())
+                                            ingredients().into_iter().filter(|i| i.probably_at_home())
                                         }
                                         key=|ingredient| ingredient.clone()
                                         children=move |ingredient| {

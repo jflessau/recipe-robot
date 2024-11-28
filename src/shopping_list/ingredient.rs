@@ -6,7 +6,7 @@ pub struct Ingredient {
     #[serde(default = "Uuid::new_v4")]
     pub id: Uuid,
     pub name: String,
-    pub probably_at_home: Option<bool>,
+    pub probably_at_home: bool,
     pub unit: String,
     pub quantity: usize,
 
@@ -27,7 +27,7 @@ impl Ingredient {
         self.name.clone()
     }
 
-    pub fn probably_at_home(&self) -> Option<bool> {
+    pub fn probably_at_home(&self) -> bool {
         self.probably_at_home
     }
 
@@ -92,7 +92,7 @@ impl Display for Ingredient {
             "{}: {}{}",
             self.name,
             self.status,
-            if self.probably_at_home.unwrap_or(false) {
+            if self.probably_at_home {
                 " ℹ️ you probably have this at home"
             } else {
                 ""
