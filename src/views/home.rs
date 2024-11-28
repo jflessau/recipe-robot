@@ -1,11 +1,15 @@
+use crate::api::authorized;
 use crate::components::{
     loading_indicator::LoadingIndicator, recipe_input::View as RecipeInput,
     shopping_list::ShoppingList,
 };
 use crate::{prelude::*, shopping_list::Ingredient};
+use leptos_router::Redirect;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum State {
+    CheckAuth,
+    Unauthorized,
     Error {
         recipe_text: String,
         error: String,
@@ -25,6 +29,8 @@ pub enum State {
 impl State {
     pub fn recipe_text(&self) -> String {
         match self {
+            State::CheckAuth => "".to_string(),
+            State::Unauthorized => "".to_string(),
             State::RecipeInput { recipe_text } => recipe_text.clone(),
             State::FindIngredients { recipe_text } => recipe_text.clone(),
             State::Error { recipe_text, .. } => recipe_text.clone(),
@@ -102,125 +108,31 @@ impl State {
 
 #[component]
 pub fn View() -> impl IntoView {
-    let (state, set_state) = create_signal(State::RecipeInput {
-        recipe_text: "".to_string(),
+    log::info!("Home::View");
+    let (state, set_state) = create_signal(State::CheckAuth);
+    create_local_resource(state, move |state| async move {
+        if let State::CheckAuth = state {
+            log::info!("checking auth");
+            match authorized().await {
+                Ok(authorized) => {
+                    if authorized {
+                        log::info!("Authorized");
+                        set_state(State::RecipeInput {
+                            recipe_text: "".to_string(),
+                        });
+                        log::info!("state set to RecipeInput");
+                    } else {
+                        log::warn!("Unauthorized");
+                        set_state(State::Unauthorized);
+                    }
+                }
+                Err(err) => {
+                    log::error!("failed to check auth: {:?}", err);
+                    set_state(State::Unauthorized);
+                }
+            }
+        }
     });
-
-    // let (state, set_state) = create_signal(State::ShoppingList {
-    //     recipe_text: "".to_string(),
-    //     ingredients: vec![
-    //         Ingredient {
-    //             id: Uuid::new_v4(),
-    //             name: "Magerquark".to_string(),
-    //             probably_at_home: Some(true),
-    //             unit: "Gram".to_string(),
-    //             quantity: 250,
-    //             status: IngredientStatus::Unchecked,
-    //         },
-    //         Ingredient {
-    //             id: Uuid::new_v4(),
-    //             name: "Butter".to_string(),
-    //             probably_at_home: Some(true),
-    //             unit: "Gram".to_string(),
-    //             quantity: 250,
-    //             status: IngredientStatus::ApiSearchFailed {
-    //                 error: "Die Anfrage an Rewe ist fehlgeschlagen".to_string(),
-    //             },
-    //         },
-    //         Ingredient {
-    //             id: Uuid::new_v4(),
-    //             name: "Butter".to_string(),
-    //             probably_at_home: Some(true),
-    //             unit: "Gram".to_string(),
-    //             quantity: 250,
-    //             status: IngredientStatus::NoSearchResults,
-    //         },
-    //         Ingredient {
-    //             id: Uuid::new_v4(),
-    //             name: "Butter".to_string(),
-    //             probably_at_home: Some(true),
-    //             unit: "Gram".to_string(),
-    //             quantity: 250,
-    //             status: IngredientStatus::SearchResults {
-    //                 items: vec![Item {
-    //                     id: Uuid::new_v4(),
-    //                     name: "Kerrygold".to_string(),
-    //                     quantity: Some("250 g".to_string()),
-    //                     price_cent: Some(150),
-    //                     url: Some("https://www.rewe.de/produkte/1234".to_string()),
-    //                     image_url: Some("https://www.rewe.de/produkte/1234/image.jpg".to_string()),
-    //                 }],
-    //             },
-    //         },
-    //         Ingredient {
-    //             id: Uuid::new_v4(),
-    //             name: "Butter".to_string(),
-    //             probably_at_home: Some(true),
-    //             unit: "Gram".to_string(),
-    //             quantity: 250,
-    //             status: IngredientStatus::AiFailsToSelectItem {
-    //                 alternatives: vec![Item {
-    //                     id: Uuid::new_v4(),
-    //                     name: "Kerrygold".to_string(),
-    //                     quantity: Some("250 g".to_string()),
-    //                     price_cent: Some(150),
-    //                     url: Some("https://www.rewe.de/produkte/1234".to_string()),
-    //                     image_url: Some("https://www.rewe.de/produkte/1234/image.jpg".to_string()),
-    //                 }],
-    //             },
-    //         },
-    //         Ingredient {
-    //             id: Uuid::new_v4(),
-    //             name: "Butter".to_string(),
-    //             probably_at_home: Some(true),
-    //             unit: "Gram".to_string(),
-    //             quantity: 250,
-    //             status: IngredientStatus::Matched {
-    //                 item: Item {
-    //                     id: Uuid::new_v4(),
-    //                     name: "Kerrygold".to_string(),
-    //                     quantity: Some("250 g".to_string()),
-    //                     price_cent: Some(150),
-    //                     url: Some("https://www.rewe.de/produkte/1234".to_string()),
-    //                     image_url: Some("https://jflessau.com/img/placeholder.jpg".to_string()),
-    //                 },
-    //                 pieces: 1,
-    //                 alternatives: vec![
-    //                     Item {
-    //                         id: Uuid::new_v4(),
-    //                         name: "Kerrygold".to_string(),
-    //                         quantity: Some("250 g".to_string()),
-    //                         price_cent: Some(350),
-    //                         url: Some("https://www.rewe.de/produkte/1234".to_string()),
-    //                         image_url: Some(
-    //                             "https://www.rewe.de/produkte/1234/image.jpg".to_string(),
-    //                         ),
-    //                     },
-    //                     Item {
-    //                         id: Uuid::new_v4(),
-    //                         name: "Kerrygold ungesalzen".to_string(),
-    //                         quantity: Some("250 g".to_string()),
-    //                         price_cent: Some(450),
-    //                         url: Some("https://www.rewe.de/produkte/1234".to_string()),
-    //                         image_url: Some(
-    //                             "https://www.rewe.de/produkte/1234/image.jpg".to_string(),
-    //                         ),
-    //                     },
-    //                     Item {
-    //                         id: Uuid::new_v4(),
-    //                         name: "Markenbutter".to_string(),
-    //                         quantity: Some("250 g".to_string()),
-    //                         price_cent: Some(550),
-    //                         url: Some("https://www.rewe.de/produkte/1234".to_string()),
-    //                         image_url: Some(
-    //                             "https://www.rewe.de/produkte/1234/image.jpg".to_string(),
-    //                         ),
-    //                     },
-    //                 ],
-    //             },
-    //         },
-    //     ],
-    // });
 
     view! {
         <div class="w-full flex flex-col items-center justify-center gap-6">
@@ -234,6 +146,16 @@ pub fn View() -> impl IntoView {
             <div class="w-full flex flex-col items-center justify-start gap-12">
                 {move || {
                     match state() {
+                        State::CheckAuth => {
+                            view! {
+                                <LoadingIndicator
+                                    title="Login".to_string()
+                                    subtitle="Bitte warten.".to_string()
+                                />
+                            }
+                                .into_view()
+                        }
+                        State::Unauthorized => view! { <Redirect path="/login" /> }.into_view(),
                         State::Error { error, .. } => {
                             view! {
                                 <p class="w-full text-center font-bold text-error">

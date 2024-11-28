@@ -14,7 +14,8 @@ pub enum AuthState {
 #[component]
 pub fn View() -> impl IntoView {
     let (state, set_state) = create_signal(AuthState::Idle);
-    let (input, set_input) = create_signal(String::new());
+    let (username, set_username) = create_signal(String::new());
+    let (pwd, set_pwd) = create_signal(String::new());
 
     view! {
         <div class="w-full flex flex-col items-center justify-center gap-12">
@@ -29,27 +30,41 @@ pub fn View() -> impl IntoView {
                     view! {
                         <form class="w-full flex flex-col justify-start items-center gap-12">
                             <div class="w-full flex flex-col gap-1">
+                                <label for="username-input" class="text-center text-s font-bold">
+                                    Nutzername
+                                </label>
+                                <input
+                                    id="username-input"
+                                    type="text"
+                                    placeholder="Passwort"
+                                    class="rounded-lg text-center"
+                                    prop:value=username
+                                    on:input=move |ev| set_username(event_target_value(&ev))
+                                />
+
                                 <label for="password-input" class="text-center text-s font-bold">
-                                    Bitte gib dein Passwort ein
+                                    Passwort
                                 </label>
                                 <input
                                     id="password-input"
                                     type="password"
                                     placeholder="Passwort"
                                     class="rounded-lg text-center"
-                                    prop:value=input
-                                    on:input=move |ev| set_input(event_target_value(&ev))
+                                    prop:value=pwd
+                                    on:input=move |ev| set_pwd(event_target_value(&ev))
                                 />
                             </div>
                             <button
                                 disabled=move || {
-                                    input().is_empty() || matches!(state(), AuthState::Loading)
+                                    pwd().is_empty() || username().is_empty()
+                                        || matches!(state(), AuthState::Loading)
                                 }
                                 on:click=move |_| {
-                                    let password = input();
+                                    let username = username();
+                                    let password = pwd();
                                     spawn_local(async move {
                                         set_state.set(AuthState::Loading);
-                                        match login(password).await {
+                                        match login(username, password).await {
                                             Err(err) => {
                                                 set_state
                                                     .set(AuthState::Error {
@@ -71,6 +86,7 @@ pub fn View() -> impl IntoView {
                         .into_view()
                 }
                 AuthState::Loading => {
+
                     view! {
                         <LoadingIndicator
                             title="Prüfe Passwort...".to_string()

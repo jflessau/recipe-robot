@@ -26,7 +26,7 @@ async fn main() {
     use leptos::*;
 
     use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
-    use listoplate::api::Claims;
+    use listoplate::api::{AuthenticatedUser, Claims};
     use listoplate::app::*;
     use listoplate::fileserv::file_and_error_handler;
     use listoplate::AppState;
@@ -37,7 +37,6 @@ async fn main() {
         LatencyUnit,
     };
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-    use uuid::Uuid;
 
     // ingest env vars
 
@@ -91,7 +90,7 @@ async fn main() {
         cookies: CookieJar,
         req: Request<Body>,
     ) -> impl IntoResponse {
-        let user_id: Option<Uuid> = cookies
+        let username: Option<String> = cookies
             .get("jwt")
             .and_then(|cookie| {
                 let jwt = cookie.value();
@@ -107,7 +106,7 @@ async fn main() {
         handle_server_fns_with_context(
             move || {
                 log::info!("auth middleware");
-                provide_context(user_id);
+                provide_context(username.clone().map(AuthenticatedUser::new));
                 provide_context(app_state.clone());
             },
             req,

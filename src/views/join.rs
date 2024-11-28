@@ -8,7 +8,7 @@ enum JoinState {
     Idle,
     Loading,
     Error { error: String },
-    Success { password: String },
+    Success { username: String, password: String },
     PasswordSaved,
 }
 
@@ -44,7 +44,8 @@ pub fn View() -> impl IntoView {
                                         Ok(res) => {
                                             set_state
                                                 .set(JoinState::Success {
-                                                    password: res,
+                                                    username: res.0,
+                                                    password: res.1,
                                                 });
                                         }
                                     }
@@ -82,7 +83,7 @@ pub fn View() -> impl IntoView {
 
                     view! {
                         <LoadingIndicator
-                            title="Prüfe Passwort...".to_string()
+                            title="Prüfe Code...".to_string()
                             subtitle="Ich hab's gleich".to_string()
                         />
                     }
@@ -91,16 +92,17 @@ pub fn View() -> impl IntoView {
                 JoinState::Error { error } => {
                     view! { <p>Fehler beim Login: {error}</p> }.into_view()
                 }
-                JoinState::Success { password } => {
+                JoinState::Success { username, password } => {
                     view! {
                         <h1 class="leading-relaxed text-attention">"Registrierung erfolgreich!"</h1>
-                        <p class="">
-                            "Dein Login-Passwort lautet:" <br /><br />
-                            <span class="font-bold text-l">{password}<br /><br /></span>
-                            <span class="text">
-                                "Das ist das einzige Mal, dass es dir angezeigt wird. "
-                                "Bitte speichere es JETZT ab. Zum Beispiel in einem Passwort-Manager. "
-                            </span>
+                        <p class="">"Deine Login-Daten lauten:"</p>
+                        <p>
+                            "Nutzername:"<br /><span class="font-bold">{username}</span><br /><br />
+                            "Passwort:"<br /><span class="font-bold">{password}</span>
+                        </p>
+                        <p class="text">
+                            "Das ist das einzige Mal, dass sie dir angezeigt werden. "
+                            "Bitte speichere sie JETZT ab. Zum Beispiel in einem Passwort-Manager. "
                         </p>
                         <button
                             on:click=move |_| set_state.set(JoinState::PasswordSaved)

@@ -1,9 +1,7 @@
 use crate::prelude::*;
 
-#[cfg(feature = "ssr")]
 use crate::shopping_list::{Ingredient, IngredientStatus};
 
-#[cfg(feature = "ssr")]
 use openai::{
     chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
     set_base_url, set_key,
@@ -14,7 +12,6 @@ pub struct Ai {
     max_chars: i32,
 }
 
-#[cfg(feature = "ssr")]
 impl Ai {
     pub fn new() -> Self {
         Self { max_chars: 16_000 }
@@ -219,9 +216,7 @@ impl Ai {
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
-pub struct IngredientItemMatch {
-    #[cfg(feature = "ssr")]
+struct IngredientItemMatch {
     item_index: Option<usize>,
-    #[cfg(feature = "ssr")]
     pieces_required: usize,
 }
