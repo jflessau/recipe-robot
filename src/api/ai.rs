@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use surrealdb::{engine::any::Any, sql::thing, Surreal};
 
-use crate::api::db::CashFlow;
+use crate::api::{db::CashFlow, ApiResponse};
 use crate::shopping_list::{Ingredient, IngredientStatus};
 
 use openai::{
@@ -41,7 +41,7 @@ impl AiUsage {
         }
     }
 
-    pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<()> {
+    pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<ApiResponse<()>> {
         let application_wide_daily_limit_dollar =
             std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
                 .unwrap_or("1.0".to_string())
@@ -80,7 +80,10 @@ impl AiUsage {
             warn!(
                 "application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_wide_daily_limit_dollar:.2}"
             );
-            bail!("application wide daily limit exceeded")
+            return Ok(ApiResponse::Err(
+                "Das tägliche Kosten-Limit für die AI wurde erreicht. Bitte komm' morgen wieder!"
+                    .to_string(),
+            ));
         }
 
         let Some(user_daily_costs): Option<f64> = db
@@ -111,10 +114,13 @@ impl AiUsage {
             warn!(
                 "user '{username}' exceeded daily limit: ${user_daily_costs:.2} > ${user_daily_limit_dollar:.2}"
             );
-            bail!("user daily limit exceeded")
+            return Ok(ApiResponse::Err(
+                "Dein tägliches Kosten-Limit für die AI wurde erreicht. Bitte komm' morgen wieder!"
+                    .to_string(),
+            ));
         }
 
-        Ok(())
+        Ok(ApiResponse::Ok(()))
     }
 }
 
@@ -128,7 +134,12 @@ impl Ai {
         Self { max_chars: 16_000 }
     }
 
-    async fn ask(&self, db: &Surreal<Any>, username: &String, message: &str) -> Result<String> {
+    async fn ask(
+        &self,
+        db: &Surreal<Any>,
+        username: &String,
+        message: &str,
+    ) -> Result<ApiResponse<String>> {
         let input_message = message.trim().to_string();
 
         if input_message.is_empty() {
@@ -138,15 +149,13 @@ impl Ai {
         let msg_len = input_message.chars().count() as i32;
 
         if msg_len > self.max_chars {
-            bail!(
-                "message is too long, has {msg_len} chars, max is {}",
-                self.max_chars
-            )
+            return Ok(ApiResponse::Err(
+                "Deine Anfrage überlastet die AI.".to_string(),
+            ));
         }
 
-        if let Err(err) = AiUsage::check_limits(db, username).await {
-            error!("failed to check ai limits: {:?}", err);
-            bail!("failed to check ai limits")
+        if let ApiResponse::Err(err) = AiUsage::check_limits(db, username).await? {
+            return Ok(ApiResponse::Err(err.to_string()));
         };
 
         let token = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
@@ -174,7 +183,6 @@ impl Ai {
         });
 
         let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", messages.clone())
-            // .model("gpt-4o")
             .model("gpt-4o-mini")
             .create()
             .await
@@ -194,10 +202,9 @@ impl Ai {
         ];
         if let Err(err) = CashFlow::attribute_ai_costs(db, username, ai_usages).await {
             error!("failed to attribute ai costs: {:?}", err);
-            bail!("failed to attribute ai costs")
         }
 
-        Ok(output_message)
+        Ok(ApiResponse::Ok(output_message))
     }
 
     pub async fn get_ingredients(
@@ -205,7 +212,7 @@ impl Ai {
         db: &Surreal<Any>,
         username: &String,
         recipe: &String,
-    ) -> Result<Vec<Ingredient>> {
+    ) -> Result<ApiResponse<Vec<Ingredient>>> {
         let prompt = r#"
             Extrahiere alle Zutaten aus dem Rezept.
             Übersetze die Zutaten ins Deutsche, wenn nötig.
@@ -244,15 +251,25 @@ impl Ai {
             .await
             .context("failed to ask ai for ingredients")?;
 
+        if let ApiResponse::Err(err) = &response {
+            return Ok(ApiResponse::Err(err.clone()));
+        }
+
+        let ApiResponse::Ok(response) = response else {
+            bail!("no response from ai")
+        };
+
         match serde_json::from_str::<Vec<Ingredient>>(&response) {
             Ok(mut ingredients) => {
                 ingredients.iter_mut().for_each(|i| i.enrich());
 
-                Ok(ingredients)
+                Ok(ApiResponse::Ok(ingredients))
             }
             Err(e) => {
-                error!("failed to parse ai response: {}, error: {}", response, e);
-                bail!("failed to parse ai response")
+                error!("failed to parse ai response: {response}, error: {e:?}");
+                Ok(ApiResponse::Err(
+                    "Die AI konnte die Zutaten nicht extrahieren.".to_string(),
+                ))
             }
         }
     }
@@ -262,20 +279,26 @@ impl Ai {
         db: &Surreal<Any>,
         username: &String,
         ingredient: &mut Ingredient,
-    ) -> Result<()> {
+    ) -> Result<ApiResponse<()>> {
         // check if item list is empty
 
         if matches!(ingredient.status(), IngredientStatus::NoSearchResults) {
-            return Ok(());
+            return Ok(ApiResponse::Ok(()));
         }
 
         let IngredientStatus::SearchResults { ref items } = ingredient.status() else {
-            bail!("ingredient has no search results")
+            error!("ingredient status is not SearchResults: {ingredient:?}");
+            return Ok(ApiResponse::Err(
+                "Die Zutat hat keine Suchergebnisse.".to_string(),
+            ));
         };
 
         if items.is_empty() {
             ingredient.set_status(IngredientStatus::NoSearchResults);
-            return Ok(());
+            warn!("tried to find items for ingredient without search results");
+            return Ok(ApiResponse::Err(
+                "Die Zutat hat keine Suchergebnisse.".to_string(),
+            ));
         }
 
         // compose prompt
@@ -308,6 +331,15 @@ impl Ai {
             .ask(db, username, &prompt)
             .await
             .context("failed to ask ai for matching item")?;
+
+        if let ApiResponse::Err(err) = &response {
+            return Ok(ApiResponse::Err(err.clone()));
+        }
+
+        let ApiResponse::Ok(response) = response else {
+            bail!("no response from ai")
+        };
+
         let response = serde_json::from_str::<IngredientItemMatch>(&response);
 
         let Ok(response) = response else {
@@ -317,7 +349,9 @@ impl Ai {
             ingredient.set_status(IngredientStatus::AiFailsToSelectItem {
                 alternatives: items.clone(),
             });
-            return Ok(());
+            return Ok(ApiResponse::Err(
+                "Die AI konnte keinen Artikel für die Zutat auswählen.".to_string(),
+            ));
         };
 
         // ckeck if ai found a match
@@ -327,7 +361,9 @@ impl Ai {
             ingredient.set_status(IngredientStatus::AiFailsToSelectItem {
                 alternatives: items.clone(),
             });
-            return Ok(());
+            return Ok(ApiResponse::Err(
+                "Die AI konnte keinen passenden Artikel.".to_string(),
+            ));
         };
 
         // check if index of match is in range
@@ -337,7 +373,9 @@ impl Ai {
             ingredient.set_status(IngredientStatus::AiFailsToSelectItem {
                 alternatives: items.clone(),
             });
-            return Ok(());
+            return Ok(ApiResponse::Err(
+                "Die AI hat keinen passenden Artikel gefunden.".to_string(),
+            ));
         };
 
         // set item
@@ -348,7 +386,7 @@ impl Ai {
             alternatives: items.clone(),
         });
 
-        Ok(())
+        Ok(ApiResponse::Ok(()))
     }
 }
 

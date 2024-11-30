@@ -22,26 +22,25 @@ pub async fn get_ingredients(
     };
 
     let shopping_list = ShoppingList::new(recipe_text.clone());
-
     let ai = Ai::new();
 
-    let Ok(ingredients) = ai
+    match ai
         .get_ingredients(&state.db, &user.username, &shopping_list.recipe())
         .await
-    else {
-        error!("failed to get ingredients");
-        return Ok(ApiResponse::Err(
-            "Die AI konnte keine Zutaten finden.".to_string(),
-        ));
-    };
-
-    match User::submit_recipe(&state.db, user.username, recipe_text, ingredients.clone()).await {
-        Ok(_) => Ok(ApiResponse::Ok(ingredients)),
-        Err(e) => {
-            error!("failed to submit recipe: {:?}", e);
-            Ok(ApiResponse::Err(
-                "Das Rezept konnte nicht verarbeitet werden.".to_string(),
-            ))
+    {
+        Err(err) => {
+            error!("failed to get ingredients: {:?}", err);
+            Err(ServerFnError::new("failed to get ingredients"))
+        }
+        Ok(ApiResponse::Err(err)) => Ok(ApiResponse::Err(err)),
+        Ok(ApiResponse::Ok(ingredients)) => {
+            if let Err(err) =
+                User::submit_recipe(&state.db, user.username, recipe_text, ingredients.clone())
+                    .await
+            {
+                error!("failed to submit recipe: {:?}", err);
+            }
+            Ok(ApiResponse::Ok(ingredients))
         }
     }
 }
@@ -78,7 +77,7 @@ pub async fn get_item_from_vendor(
         .match_item(&state.db, &user.username, &mut ingredient)
         .await
     {
-        Ok(_) => {
+        Ok(ApiResponse::Ok(_)) => {
             if let Err(err) =
                 IngredientDb::matches_item(state.db, &ingredient, ingredient_db_id, &vendor).await
             {
@@ -87,6 +86,7 @@ pub async fn get_item_from_vendor(
             }
             Ok(ApiResponse::Ok(ingredient))
         }
+        Ok(ApiResponse::Err(err)) => Ok(ApiResponse::Err(err)),
         Err(e) => {
             error!("failed to match item: {:?}", e);
             Ok(ApiResponse::Err(
