@@ -3,6 +3,7 @@ use model::*;
 
 use super::*;
 
+use crate::prelude::*;
 use reqwest;
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +22,7 @@ impl Rewe {
         Self {}
     }
 
+    #[cfg(feature = "ssr")]
     pub async fn find_items(&self, ingredient: &mut Ingredient) -> Result<(), String> {
         // ask vendor api
 

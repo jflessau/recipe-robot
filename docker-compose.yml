@@ -6,11 +6,11 @@ services:
       - "8000:8000"
     volumes:
       - ./db_data/content:/data/
-    command: [
+    command:
+      [
         "start",
-        # "-h",
         "--username",
-        "listoplate",
+        "recipe_ranger",
         "--password",
         "muchsecret",
         "--strict",

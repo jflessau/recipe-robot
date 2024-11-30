@@ -17,6 +17,7 @@ impl fmt::Display for Vendor {
     }
 }
 
+#[cfg(feature = "ssr")]
 impl Vendor {
     pub async fn find_items(&self, ingredient: &mut Ingredient) -> Result<(), String> {
         match self {

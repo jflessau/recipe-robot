@@ -36,7 +36,6 @@ pub fn ErrorTemplate(
         .into_iter()
         .filter_map(|(_k, v)| v.downcast_ref::<AppError>().cloned())
         .collect();
-    error!("Errors: {errors:#?}");
 
     #[cfg(feature = "ssr")]
     {
