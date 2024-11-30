@@ -12,7 +12,7 @@ pub enum Vendor {
 impl fmt::Display for Vendor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Vendor::Rewe { config } => write!(f, "Rewe: {}", config.zip_code),
+            Vendor::Rewe { .. } => write!(f, "rewe"),
         }
     }
 }

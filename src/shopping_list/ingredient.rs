@@ -15,6 +15,10 @@ pub struct Ingredient {
 }
 
 impl Ingredient {
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
     pub fn status(&self) -> IngredientStatus {
         self.status.clone()
     }

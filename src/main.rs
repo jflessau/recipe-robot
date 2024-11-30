@@ -105,7 +105,6 @@ async fn main() {
 
         handle_server_fns_with_context(
             move || {
-                log::info!("auth middleware");
                 provide_context(username.clone().map(AuthenticatedUser::new));
                 provide_context(app_state.clone());
             },

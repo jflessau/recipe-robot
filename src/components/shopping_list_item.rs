@@ -22,8 +22,16 @@ pub fn ShoppingListItem(ingredient: Ingredient) -> impl IntoView {
             .await;
 
             match res {
-                Ok(ingredient) => {
+                Ok(ApiResponse::Ok(ingredient)) => {
                     set_ingredient(ingredient);
+                }
+                Ok(ApiResponse::Err(e)) => {
+                    log::error!("failed to get item from vendor: {:?}", e);
+                    set_ingredient.update(|i| {
+                        i.set_status(IngredientStatus::AiFailsToSelectItem {
+                            alternatives: vec![],
+                        })
+                    });
                 }
                 Err(e) => {
                     log::error!("failed to get item from vendor: {:?}", e);

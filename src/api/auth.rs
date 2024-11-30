@@ -36,7 +36,7 @@ impl Claims {
 pub async fn join(invite_code: String) -> Result<(String, String), ServerFnError> {
     let state = expect_context::<AppState>();
 
-    match User::join(state.db.clone(), invite_code).await {
+    match User::join(&state.db, invite_code).await {
         Ok((username, password)) => Ok((username, password)),
         Err(e) => {
             log::error!("Error joining: {:?}", e);
@@ -50,7 +50,7 @@ pub async fn login(username: String, password: String) -> Result<(), ServerFnErr
     let response = expect_context::<ResponseOptions>();
     let state = expect_context::<AppState>();
 
-    match User::login(state.db.clone(), username, password).await {
+    match User::login(&state.db, username, password).await {
         Err(e) => {
             log::error!("Error logging in: {:?}", e);
             Err(ServerFnError::new("Error logging in"))
