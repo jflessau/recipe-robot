@@ -69,8 +69,9 @@ impl From<uuid::Error> for Error {
 }
 
 impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Self {
-        Error::BadRequest(err.to_string())
+    fn from(_err: serde_json::Error) -> Self {
+        tracing::warn!("serde_json error: {:?}", _err);
+        Error::InternalServer
     }
 }
 

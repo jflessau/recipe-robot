@@ -3,12 +3,7 @@ pub use crate::{
     db::{Relation, User},
     error::Error,
     handler::auth::AuthenticatedUser,
-    model::{
-        cash_flow::CashFlow,
-        ingredient::{Ingredient, IngredientStatus},
-        item::Item,
-        vendor::Vendor,
-    },
+    model::{cash_flow::CashFlow, ingredient::Ingredient, item::Item, vendor::Vendor},
     util::new_id,
     AppState,
 };

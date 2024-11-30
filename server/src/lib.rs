@@ -91,6 +91,10 @@ pub async fn app() -> error::Result<Router> {
         .route("/auth/login", post(handler::auth::login))
         .route("/auth/logout", get(handler::auth::logout))
         .route("/auth/me", get(handler::auth::me))
+        .route(
+            "/recipe/ingredients",
+            post(handler::ingredient::get_recipe_ingredients),
+        )
         .layer(middleware_stack);
 
     Ok(app)

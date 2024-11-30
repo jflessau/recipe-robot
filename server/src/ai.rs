@@ -176,19 +176,7 @@ impl Ai {
     ) -> Result<(), Error> {
         // check if item list is empty
 
-        if matches!(ingredient.status, IngredientStatus::NoSearchResults) {
-            return Err(Error::BadRequest("no items found for matching".to_string()));
-        }
-
-        let IngredientStatus::SearchResults { ref items } = ingredient.status else {
-            error!("ingredient status is not SearchResults: {ingredient:?}");
-            return Err(Error::BadRequest(
-                "ingredient is not ready to get matched with an item".to_string(),
-            ));
-        };
-
-        if items.is_empty() {
-            ingredient.status = IngredientStatus::NoSearchResults;
+        if ingredient.alternatives.is_empty() {
             warn!("tried to find items for ingredient without search results");
             return Err(Error::NotFound);
         }
@@ -214,7 +202,7 @@ impl Ai {
         "#;
         let prompt = format!(
             "{prompt}\n\nZutat: {}\n\nArtikel aus dem Supermakrt: {:?}",
-            ingredient.name, items
+            ingredient.name, ingredient.alternatives
         );
 
         // ask ai
@@ -231,18 +219,14 @@ impl Ai {
 
         // check if index of match is in range
 
-        let Some(item) = items.get(index).cloned() else {
+        let Some(item) = ingredient.alternatives.get(index).cloned() else {
             error!("ai selected item index out of range for ingredient: {ingredient:?}");
             return Err(Error::InternalServer);
         };
 
         // set item
 
-        ingredient.status = IngredientStatus::Matched {
-            item,
-            pieces: response.pieces_required,
-            alternatives: items.clone(),
-        };
+        ingredient.select_item(item.id, Some(response.pieces_required));
 
         Ok(())
     }

@@ -83,6 +83,9 @@ button {
 	user-select: none;
 	--webkit-user-select: none;
 	-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+	&:active {
+		filter: brightness(0.95);
+	}
 	&:disabled {
 		opacity: 0.5;
 	}
@@ -119,6 +122,17 @@ button.fancy {
 	&:active {
 		transform: translateY(2.5px);
 		box-shadow: 0 1.5px 0 0 color.adjust($attention, $lightness: -20%);
+	}
+}
+
+.ingredient-list-item {
+	border: solid 1px color.adjust($mid, $lightness: -20%);
+}
+
+.item {
+	border-bottom: solid 1px $mid;
+	&:last-child {
+		border-bottom: none;
 	}
 }
 

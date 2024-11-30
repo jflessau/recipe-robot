@@ -68,6 +68,10 @@
 			return this.client.get(`/auth/me`);
 		}
 
+		async recipeIngredients<T = { status: number; data: { ingredients: Ingredient[] } }>(recipe: string): Promise<T> {
+			return this.client.post(`/recipe/ingredients`, { text: recipe });
+		}
+
 		async logout<T = { status: number }>(): Promise<T> {
 			return this.client.get(`/auth/logout`);
 		}
@@ -76,5 +80,24 @@
 	export const Api = new Client();
 
 	// types
-	// TODO
+
+	export interface Ingredient {
+		id: string;
+		name: string;
+		probablyAtHome: boolean;
+		unit: string;
+		quantity: number;
+		item: Item | null;
+		itemQuantity: number | null;
+		alternatives: Item[];
+	}
+
+	export interface Item {
+		id: string;
+		name: string;
+		quantity: number | null;
+		priceCent: number | null;
+		url: string | null;
+		imageUrl: string | null;
+	}
 </script>

@@ -81,13 +81,7 @@ impl Rewe {
             })
             .collect::<Vec<_>>();
 
-        if items.is_empty() {
-            ingredient.status = IngredientStatus::NoSearchResults;
-        } else {
-            ingredient.status = IngredientStatus::SearchResults {
-                items: items.clone(),
-            };
-        }
+        ingredient.alternatives = items;
 
         Ok(())
     }
