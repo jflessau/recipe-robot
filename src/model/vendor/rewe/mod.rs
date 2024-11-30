@@ -1,8 +1,6 @@
 mod model;
 use model::*;
 
-use super::*;
-
 use crate::prelude::*;
 use reqwest;
 use serde::{Deserialize, Serialize};
@@ -14,16 +12,15 @@ pub struct ReweConfig {
 
 #[derive(Debug)]
 pub struct Rewe {
-    // config: ReweConfig,
+    zip_code: String,
 }
 
 impl Rewe {
-    pub fn new(_config: ReweConfig) -> Self {
-        Self {}
+    pub fn new(zip_code: String) -> Self {
+        Self { zip_code }
     }
 
-    #[cfg(feature = "ssr")]
-    pub async fn find_items(&self, ingredient: &mut Ingredient) -> Result<(), String> {
+    pub async fn find_items(&self, ingredient: &mut Ingredient) -> Result<(), Error> {
         // ask vendor api
 
         let client = reqwest::Client::new();
@@ -32,7 +29,7 @@ impl Rewe {
             .query(&[
                 ("objectsPerPage", "16"),
                 ("page", "1"),
-                ("search", &ingredient.name()),
+                ("search", &ingredient.name),
                 ("sorting", "RELEVANCE_DESC"),
                 ("serviceTypes", "PICKUP"),
                 ("market", "540528"),
@@ -45,13 +42,9 @@ impl Rewe {
         let Ok(res) = res else {
             error!(
                 "failed to search Rewe for {}, error: {:?}",
-                ingredient.name(),
-                res
+                ingredient.name, res
             );
-            ingredient.set_status(IngredientStatus::ApiSearchFailed {
-                error: "Die Anfrage an Rewe ist fehlgeschlagen".to_string(),
-            });
-            return Err("Die Anfrage an Rewe ist fehlgeschlagen".to_string());
+            return Err(Error::InternalServer);
         };
 
         // deserialize response
@@ -60,13 +53,9 @@ impl Rewe {
         let Ok(res) = res else {
             error!(
                 "failed to search rewe for items {}, deserializing failed, error: {:?}",
-                ingredient.name(),
-                res
+                ingredient.name, res
             );
-            ingredient.set_status(IngredientStatus::ApiSearchFailed {
-                error: "Die Antwort von Rewe konnte nicht verarbeitet werden.".to_string(),
-            });
-            return Err("Die Antwort von Rewe konnte nicht verarbeitet werden.".to_string());
+            return Err(Error::InternalServer);
         };
 
         let items = res
@@ -82,7 +71,7 @@ impl Rewe {
                     .map(|a| a.article.listing.pricing);
 
                 Item {
-                    id: Uuid::new_v4(),
+                    id: new_id(),
                     name: p.name.clone(),
                     quantity: pricing.clone().map(|p| p.grammage),
                     price_cent: pricing.clone().map(|p| p.current_retail_price),
@@ -93,11 +82,11 @@ impl Rewe {
             .collect::<Vec<_>>();
 
         if items.is_empty() {
-            ingredient.set_status(IngredientStatus::NoSearchResults);
+            ingredient.status = IngredientStatus::NoSearchResults;
         } else {
-            ingredient.set_status(IngredientStatus::SearchResults {
+            ingredient.status = IngredientStatus::SearchResults {
                 items: items.clone(),
-            });
+            };
         }
 
         Ok(())

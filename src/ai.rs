@@ -1,8 +1,4 @@
 use crate::prelude::*;
-use surrealdb::{engine::any::Any, sql::thing, Surreal};
-
-use crate::api::{db::CashFlow, ApiResponse};
-use crate::shopping_list::{Ingredient, IngredientStatus};
 
 use openai::{
     chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
@@ -40,88 +36,6 @@ impl AiUsage {
             }
         }
     }
-
-    pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<ApiResponse<()>> {
-        let application_wide_daily_limit_dollar =
-            std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
-                .unwrap_or("1.0".to_string())
-                .parse::<f64>()
-                .unwrap_or(1.0);
-        let user_daily_limit_dollar = std::env::var("USER_DAILY_LIMIT_DOLLAR")
-            .unwrap_or("0.1".to_string())
-            .parse::<f64>()
-            .unwrap_or(0.1);
-
-        // check if application wide limit is exceeded
-
-        let Some(application_wide_daily_costs): Option<f64> = db
-            .query(
-                r#"
-                    (
-                        select 
-                            math::sum(->cash_flow.amount) as sum
-                        from 
-                            generates
-                        where 
-                            created_at > time::now() - 1d
-                    ).fold(100, |$a, $b| $a - $b.sum) / -1_000_000.0
-                "#,
-            )
-            .await?
-            .take(0)?
-        else {
-            bail!("failed to query application wide daily limit")
-        };
-
-        info!(
-            "application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_wide_daily_limit_dollar:.2}"
-        );
-        if application_wide_daily_costs > application_wide_daily_limit_dollar {
-            warn!(
-                "application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_wide_daily_limit_dollar:.2}"
-            );
-            return Ok(ApiResponse::Err(
-                "Das tägliche Kosten-Limit für die AI wurde erreicht. Bitte komm' morgen wieder!"
-                    .to_string(),
-            ));
-        }
-
-        let Some(user_daily_costs): Option<f64> = db
-            .query(
-                r#"
-                    (   
-                        select 
-                            math::sum(->cash_flow.amount) as sum
-                        from 
-                            generates
-                        where 
-                            created_at > time::now() - 1d
-                            and array::first(<-user) = $user
-                    ).fold(100, |$a, $b| $a - $b.sum) / -1_000_000.0;
-                "#,
-            )
-            .bind(("user", thing(&format!("user:{username}"))?))
-            .await?
-            .take(0)?
-        else {
-            bail!("failed to query application wide daily limit")
-        };
-
-        info!(
-            "user '{username}' daily costs: ${user_daily_costs:.2}, limit: ${user_daily_limit_dollar:.2}"
-        );
-        if user_daily_costs > user_daily_limit_dollar {
-            warn!(
-                "user '{username}' exceeded daily limit: ${user_daily_costs:.2} > ${user_daily_limit_dollar:.2}"
-            );
-            return Ok(ApiResponse::Err(
-                "Dein tägliches Kosten-Limit für die AI wurde erreicht. Bitte komm' morgen wieder!"
-                    .to_string(),
-            ));
-        }
-
-        Ok(ApiResponse::Ok(()))
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -139,24 +53,25 @@ impl Ai {
         db: &Surreal<Any>,
         username: &String,
         message: &str,
-    ) -> Result<ApiResponse<String>> {
+    ) -> Result<String, Error> {
         let input_message = message.trim().to_string();
 
         if input_message.is_empty() {
-            bail!("message is empty")
+            warn!("empty message");
+            return Err(Error::BadRequest("empty message".to_string()));
         }
 
         let msg_len = input_message.chars().count() as i32;
 
         if msg_len > self.max_chars {
-            return Ok(ApiResponse::Err(
-                "Deine Anfrage überlastet die AI.".to_string(),
-            ));
+            warn!(
+                "message too long: {msg_len} > {}, truncating",
+                self.max_chars
+            );
+            return Err(Error::PayloadTooLarge);
         }
 
-        if let ApiResponse::Err(err) = AiUsage::check_limits(db, username).await? {
-            return Ok(ApiResponse::Err(err.to_string()));
-        };
+        check_limits(db, username).await?;
 
         let token = std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
 
@@ -185,26 +100,28 @@ impl Ai {
         let chat_completion = ChatCompletion::builder("gpt-3.5-turbo", messages.clone())
             .model("gpt-4o-mini")
             .create()
-            .await
-            .context("failed to create chat completion")?;
+            .await?;
 
         let Some(response) = chat_completion.choices.first() else {
-            bail!("no response from ai")
+            warn!("no response from ai");
+            return Err(Error::InternalServer);
         };
 
         let Some(output_message) = response.message.content.clone() else {
-            bail!("no message in response from ai")
+            warn!("no output message from ai");
+            return Err(Error::InternalServer);
         };
 
-        let ai_usages = vec![
-            AiUsage::input_token(input_message.chars().count()),
-            AiUsage::output_token(output_message.chars().count()),
-        ];
-        if let Err(err) = CashFlow::attribute_ai_costs(db, username, ai_usages).await {
-            error!("failed to attribute ai costs: {:?}", err);
-        }
+        // TODO
+        // let ai_usages = vec![
+        //     AiUsage::input_token(input_message.chars().count()),
+        //     AiUsage::output_token(output_message.chars().count()),
+        // ];
+        // if let Err(err) = CashFlow::attribute_ai_costs(db, username, ai_usages).await {
+        //     error!("failed to attribute ai costs: {:?}", err);
+        // }
 
-        Ok(ApiResponse::Ok(output_message))
+        Ok(output_message)
     }
 
     pub async fn get_ingredients(
@@ -212,7 +129,7 @@ impl Ai {
         db: &Surreal<Any>,
         username: &String,
         recipe: &String,
-    ) -> Result<ApiResponse<Vec<Ingredient>>> {
+    ) -> Result<Vec<Ingredient>, Error> {
         let prompt = r#"
             Extrahiere alle Zutaten aus dem Rezept.
             Übersetze die Zutaten ins Deutsche, wenn nötig.
@@ -245,33 +162,10 @@ impl Ai {
         "#;
 
         let prompt = format!("{prompt}\n\nRezept: {recipe}");
-
-        let response = self
-            .ask(db, username, &prompt)
-            .await
-            .context("failed to ask ai for ingredients")?;
-
-        if let ApiResponse::Err(err) = &response {
-            return Ok(ApiResponse::Err(err.clone()));
-        }
-
-        let ApiResponse::Ok(response) = response else {
-            bail!("no response from ai")
-        };
-
-        match serde_json::from_str::<Vec<Ingredient>>(&response) {
-            Ok(mut ingredients) => {
-                ingredients.iter_mut().for_each(|i| i.enrich());
-
-                Ok(ApiResponse::Ok(ingredients))
-            }
-            Err(e) => {
-                error!("failed to parse ai response: {response}, error: {e:?}");
-                Ok(ApiResponse::Err(
-                    "Die AI konnte die Zutaten nicht extrahieren.".to_string(),
-                ))
-            }
-        }
+        let response = self.ask(db, username, &prompt).await?;
+        let mut ingredients = serde_json::from_str::<Vec<Ingredient>>(&response)?;
+        ingredients.iter_mut().for_each(|i| i.enrich());
+        Ok(ingredients)
     }
 
     pub async fn match_item(
@@ -279,26 +173,24 @@ impl Ai {
         db: &Surreal<Any>,
         username: &String,
         ingredient: &mut Ingredient,
-    ) -> Result<ApiResponse<()>> {
+    ) -> Result<(), Error> {
         // check if item list is empty
 
-        if matches!(ingredient.status(), IngredientStatus::NoSearchResults) {
-            return Ok(ApiResponse::Ok(()));
+        if matches!(ingredient.status, IngredientStatus::NoSearchResults) {
+            return Err(Error::BadRequest("no items found for matching".to_string()));
         }
 
-        let IngredientStatus::SearchResults { ref items } = ingredient.status() else {
+        let IngredientStatus::SearchResults { ref items } = ingredient.status else {
             error!("ingredient status is not SearchResults: {ingredient:?}");
-            return Ok(ApiResponse::Err(
-                "Die Zutat hat keine Suchergebnisse.".to_string(),
+            return Err(Error::BadRequest(
+                "ingredient is not ready to get matched with an item".to_string(),
             ));
         };
 
         if items.is_empty() {
-            ingredient.set_status(IngredientStatus::NoSearchResults);
+            ingredient.status = IngredientStatus::NoSearchResults;
             warn!("tried to find items for ingredient without search results");
-            return Ok(ApiResponse::Err(
-                "Die Zutat hat keine Suchergebnisse.".to_string(),
-            ));
+            return Err(Error::NotFound);
         }
 
         // compose prompt
@@ -327,66 +219,32 @@ impl Ai {
 
         // ask ai
 
-        let response = self
-            .ask(db, username, &prompt)
-            .await
-            .context("failed to ask ai for matching item")?;
-
-        if let ApiResponse::Err(err) = &response {
-            return Ok(ApiResponse::Err(err.clone()));
-        }
-
-        let ApiResponse::Ok(response) = response else {
-            bail!("no response from ai")
-        };
-
-        let response = serde_json::from_str::<IngredientItemMatch>(&response);
-
-        let Ok(response) = response else {
-            error!(
-                "failed to parse ai response for matching item: {response:?}, error: {response:?}"
-            );
-            ingredient.set_status(IngredientStatus::AiFailsToSelectItem {
-                alternatives: items.clone(),
-            });
-            return Ok(ApiResponse::Err(
-                "Die AI konnte keinen Artikel für die Zutat auswählen.".to_string(),
-            ));
-        };
+        let response = self.ask(db, username, &prompt).await?;
+        let response = serde_json::from_str::<IngredientItemMatch>(&response)?;
 
         // ckeck if ai found a match
 
         let Some(index) = response.item_index else {
             error!("ai refused to select item for ingredient: {ingredient:?}");
-            ingredient.set_status(IngredientStatus::AiFailsToSelectItem {
-                alternatives: items.clone(),
-            });
-            return Ok(ApiResponse::Err(
-                "Die AI konnte keinen passenden Artikel.".to_string(),
-            ));
+            return Err(Error::InternalServer);
         };
 
         // check if index of match is in range
 
         let Some(item) = items.get(index).cloned() else {
             error!("ai selected item index out of range for ingredient: {ingredient:?}");
-            ingredient.set_status(IngredientStatus::AiFailsToSelectItem {
-                alternatives: items.clone(),
-            });
-            return Ok(ApiResponse::Err(
-                "Die AI hat keinen passenden Artikel gefunden.".to_string(),
-            ));
+            return Err(Error::InternalServer);
         };
 
         // set item
 
-        ingredient.set_status(IngredientStatus::Matched {
+        ingredient.status = IngredientStatus::Matched {
             item,
             pieces: response.pieces_required,
             alternatives: items.clone(),
-        });
+        };
 
-        Ok(ApiResponse::Ok(()))
+        Ok(())
     }
 }
 
@@ -394,4 +252,78 @@ impl Ai {
 struct IngredientItemMatch {
     item_index: Option<usize>,
     pieces_required: usize,
+}
+
+pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Error> {
+    let application_wide_daily_limit_dollar = std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
+        .unwrap_or("1.0".to_string())
+        .parse::<f64>()
+        .unwrap_or(1.0);
+    let user_daily_limit_dollar = std::env::var("USER_DAILY_LIMIT_DOLLAR")
+        .unwrap_or("0.1".to_string())
+        .parse::<f64>()
+        .unwrap_or(0.1);
+
+    // check if application wide limit is exceeded
+
+    let Some(application_wide_daily_costs): Option<f64> = db
+        .query(
+            r#"
+                    (
+                        select 
+                            math::sum(->cash_flow.amount) as sum
+                        from 
+                            generates
+                        where 
+                            created_at > time::now() - 1d
+                    ).fold(100, |$a, $b| $a - $b.sum) / -1_000_000.0
+                "#,
+        )
+        .await?
+        .take(0)?
+    else {
+        error!("failed to query application wide daily costs");
+        return Err(Error::InternalServer);
+    };
+
+    info!(
+            "application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_wide_daily_limit_dollar:.2}"
+        );
+    if application_wide_daily_costs > application_wide_daily_limit_dollar {
+        warn!(
+                "application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_wide_daily_limit_dollar:.2}"
+            );
+        return Err(Error::TooManyRequests);
+    }
+
+    let Some(user_daily_costs): Option<f64> = db
+        .query(
+            r#"
+                    (   
+                        select 
+                            math::sum(->cash_flow.amount) as sum
+                        from 
+                            generates
+                        where 
+                            created_at > time::now() - 1d
+                            and array::first(<-user) = $user
+                    ).fold(100, |$a, $b| $a - $b.sum) / -1_000_000.0;
+                "#,
+        )
+        .bind(("user", thing(&format!("user:{username}"))?))
+        .await?
+        .take(0)?
+    else {
+        error!("failed to query user daily costs");
+        return Err(Error::InternalServer);
+    };
+
+    if user_daily_costs > user_daily_limit_dollar {
+        warn!(
+                "user '{username}' exceeded daily limit: ${user_daily_costs:.2} > ${user_daily_limit_dollar:.2}"
+            );
+        return Err(Error::PaymentRequired);
+    }
+
+    Ok(())
 }

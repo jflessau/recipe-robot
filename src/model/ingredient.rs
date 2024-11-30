@@ -1,10 +1,9 @@
+use super::item::Item;
 use crate::prelude::*;
-use crate::vendor::Item;
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Ingredient {
-    #[serde(default = "Uuid::new_v4")]
-    pub id: Uuid,
+    pub id: String,
     pub name: String,
     pub probably_at_home: bool,
     pub unit: String,
@@ -15,41 +14,6 @@ pub struct Ingredient {
 }
 
 impl Ingredient {
-    pub fn id(&self) -> Uuid {
-        self.id
-    }
-
-    pub fn status(&self) -> IngredientStatus {
-        self.status.clone()
-    }
-
-    pub fn set_status(&mut self, status: IngredientStatus) {
-        self.status = status;
-    }
-
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    pub fn probably_at_home(&self) -> bool {
-        self.probably_at_home
-    }
-
-    pub fn unit(&self) -> String {
-        self.unit.clone()
-    }
-
-    pub fn quantity(&self) -> usize {
-        self.quantity
-    }
-
-    pub fn price_total(&self) -> Option<f32> {
-        match &self.status {
-            IngredientStatus::Matched { item, pieces, .. } => Some(item.price_total(*pieces)),
-            _ => None,
-        }
-    }
-
     pub fn set_item_pieces(&mut self, p: usize) {
         if !(0..100).contains(&p) {
             return;
@@ -60,7 +24,7 @@ impl Ingredient {
         }
     }
 
-    pub fn select_item(&mut self, id: Uuid, pieces: Option<usize>) {
+    pub fn select_item(&mut self, id: String, pieces: Option<usize>) {
         if let IngredientStatus::SearchResults { items }
         | IngredientStatus::AiFailsToSelectItem {
             alternatives: items,
@@ -86,22 +50,6 @@ impl Ingredient {
             .find(|(n, _)| n == &self.name)
             .map(|(_, m)| m.to_string())
             .unwrap_or_else(|| self.name.clone());
-    }
-}
-
-impl Display for Ingredient {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}: {}{}",
-            self.name,
-            self.status,
-            if self.probably_at_home {
-                " ℹ️ you probably have this at home"
-            } else {
-                ""
-            },
-        )
     }
 }
 
@@ -149,7 +97,7 @@ impl Display for IngredientStatus {
                     f,
                     "✅ {}x {} (💰 {} €)",
                     pieces,
-                    item.name(),
+                    item.name,
                     item.price_total(*pieces)
                 )
             }
