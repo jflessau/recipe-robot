@@ -1,5 +1,5 @@
 [package]
-name = "listoplate"
+name = "recipe_ranger"
 version = "0.1.0"
 edition = "2021"
 

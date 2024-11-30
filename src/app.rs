@@ -11,7 +11,7 @@ pub fn app() -> impl IntoView {
     provide_meta_context();
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/listoplate.css" />
+        <Stylesheet id="leptos" href="/pkg/recipe_ranger.css" />
         <Title text="Koch doch einfach" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

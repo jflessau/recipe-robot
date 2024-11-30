@@ -26,10 +26,10 @@ async fn main() {
     use leptos::*;
 
     use leptos_axum::{generate_route_list, handle_server_fns_with_context, LeptosRoutes};
-    use listoplate::api::{AuthenticatedUser, Claims};
-    use listoplate::app::*;
-    use listoplate::fileserv::file_and_error_handler;
-    use listoplate::AppState;
+    use recipe_ranger::api::{AuthenticatedUser, Claims};
+    use recipe_ranger::app::*;
+    use recipe_ranger::fileserv::file_and_error_handler;
+    use recipe_ranger::AppState;
     use tower::ServiceBuilder;
     use tower_http::{
         timeout::TimeoutLayer,
@@ -176,7 +176,7 @@ async fn setup_db() -> Result<Surreal<Any>> {
 #[cfg(not(feature = "ssr"))]
 pub fn main() {
     use leptos::*;
-    use listoplate::app::App;
+    use recipe_ranger::app::App;
 
     _ = console_log::init_with_level(log::Level::Info);
     console_error_panic_hook::set_once();

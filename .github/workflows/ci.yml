@@ -30,5 +30,5 @@
 #           platforms: linux/amd64
 #           push: true
 #           tags: |
-#             ghcr.io/jflessau/catenary:latest
-#             ghcr.io/jflessau/catenary:${{ steps.shortened_hash.outputs.sha_short }}
+#             ghcr.io/jflessau/recipe-ranger:latest
+#             ghcr.io/jflessau/recipe-ranger:${{ steps.shortened_hash.outputs.sha_short }}

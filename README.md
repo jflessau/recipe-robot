@@ -1,6 +1,6 @@
-# 🥔 listoplate
+# 🥔 recipe-ranger
 
-Web app written in rust with leptos.
+Web app written in [rust](https://www.rust-lang.org/) with [leptos](https://leptos.dev/).
 
 Here is what it can do for you:
 
@@ -21,4 +21,6 @@ Here is what it can do for you:
 - [x] Bookkeeping of AI costs
 - [x] Deny requests if costs in past 24h exceed 50 cents
 - [x] Nicer server errors
+- [ ] CI file
 - [ ] Deploy
+- [ ] Add dev and deployment info to README

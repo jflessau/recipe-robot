@@ -2889,45 +2889,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "listoplate"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "axum-extra",
- "bcrypt 0.16.0",
- "chrono",
- "console_error_panic_hook",
- "console_log",
- "dotenv",
- "http",
- "icondata",
- "jsonwebtoken",
- "leptos",
- "leptos_axum",
- "leptos_icons",
- "leptos_meta",
- "leptos_router",
- "log",
- "openai",
- "rand",
- "random_name_generator",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "surrealdb",
- "surrealdb-migrations",
- "thiserror 1.0.69",
- "tokio",
- "tower 0.4.13",
- "tower-http",
- "tracing-subscriber",
- "uuid",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "litemap"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3957,6 +3918,45 @@ name = "reblessive"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffead9d0a0b45f3e0bc063a244b1779fd53a09d2c2f7282c186a016b1f10a778"
+
+[[package]]
+name = "recipe_ranger"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-extra",
+ "bcrypt 0.16.0",
+ "chrono",
+ "console_error_panic_hook",
+ "console_log",
+ "dotenv",
+ "http",
+ "icondata",
+ "jsonwebtoken",
+ "leptos",
+ "leptos_axum",
+ "leptos_icons",
+ "leptos_meta",
+ "leptos_router",
+ "log",
+ "openai",
+ "rand",
+ "random_name_generator",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "surrealdb",
+ "surrealdb-migrations",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower 0.4.13",
+ "tower-http",
+ "tracing-subscriber",
+ "uuid",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "redox_syscall"
