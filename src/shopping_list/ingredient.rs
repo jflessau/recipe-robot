@@ -1,38 +1,46 @@
 use crate::prelude::*;
-use crate::{
-    ai::Ai,
-    vendor::{Item, Rewe, Vendor, VendorSelect},
-};
+use crate::vendor::Item;
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Ingredient {
-    name: String,
-    #[allow(dead_code)]
-    name_og: String,
-    #[allow(dead_code)]
-    probably_at_home: Option<bool>,
-    #[serde(rename = "amount")]
-    amount_required: String,
+    #[serde(default = "Uuid::new_v4")]
+    pub id: Uuid,
+    pub name: String,
+    pub probably_at_home: bool,
+    pub unit: String,
+    pub quantity: usize,
 
     #[serde(default)]
-    status: IngredientStatus,
+    pub status: IngredientStatus,
 }
 
 impl Ingredient {
-    pub fn status(&self) -> &IngredientStatus {
-        &self.status
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn status(&self) -> IngredientStatus {
+        self.status.clone()
     }
 
     pub fn set_status(&mut self, status: IngredientStatus) {
         self.status = status;
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
-    pub fn probably_at_home(&self) -> Option<bool> {
+    pub fn probably_at_home(&self) -> bool {
         self.probably_at_home
+    }
+
+    pub fn unit(&self) -> String {
+        self.unit.clone()
+    }
+
+    pub fn quantity(&self) -> usize {
+        self.quantity
     }
 
     pub fn price_total(&self) -> Option<f32> {
@@ -42,46 +50,42 @@ impl Ingredient {
         }
     }
 
-    async fn find_at_vendor(
-        &mut self,
-        vendor_select: VendorSelect,
-        themes: &Vec<String>,
-        ai: &Ai,
-    ) -> Result<()> {
-        let vendor = match &vendor_select {
-            VendorSelect::Rewe { config } => Rewe::new(config.clone()).await,
-        };
-        let Ok(vendor) = vendor else {
-            bail!(
-                "failed to talk to vendor {}, error: {vendor:?}",
-                vendor_select
-            );
-        };
+    pub fn set_item_pieces(&mut self, p: usize) {
+        if !(0..100).contains(&p) {
+            return;
+        }
 
-        info!("🔍 search {} for ingredient {}", vendor.name(), self.name());
+        if let IngredientStatus::Matched { pieces, .. } = &mut self.status {
+            *pieces = p;
+        }
+    }
 
-        // list items at vendor
-
-        match vendor.search_for_items(self.clone()).await {
-            Err(err) => {
-                self.set_status(IngredientStatus::ApiSearchFailed {
-                    error: format!("{err:?}"),
-                });
+    pub fn select_item(&mut self, id: Uuid, pieces: Option<usize>) {
+        if let IngredientStatus::SearchResults { items }
+        | IngredientStatus::AiFailsToSelectItem {
+            alternatives: items,
+        }
+        | IngredientStatus::Matched {
+            alternatives: items,
+            ..
+        } = &mut self.status
+        {
+            if let Some(item) = items.iter().find(|i| i.id == id) {
+                self.status = IngredientStatus::Matched {
+                    item: item.clone(),
+                    pieces: pieces.unwrap_or(1),
+                    alternatives: items.clone(),
+                };
             }
-            Ok(items) => {
-                self.set_status(IngredientStatus::SearchResults { items });
-            }
-        };
+        }
+    }
 
-        // match results with ai
-
-        info!("🤖 using ai to match items");
-        vendor
-            .match_item(self, themes, ai)
-            .await
-            .context("failed to match item")?;
-
-        Ok(())
+    pub fn enrich(&mut self) {
+        self.name = INGREDIENT_NAME_MAPPINGS
+            .iter()
+            .find(|(n, _)| n == &self.name)
+            .map(|(_, m)| m.to_string())
+            .unwrap_or_else(|| self.name.clone());
     }
 }
 
@@ -92,7 +96,7 @@ impl Display for Ingredient {
             "{}: {}{}",
             self.name,
             self.status,
-            if self.probably_at_home.unwrap_or(false) {
+            if self.probably_at_home {
                 " ℹ️ you probably have this at home"
             } else {
                 ""
@@ -105,7 +109,6 @@ impl Display for Ingredient {
 pub enum IngredientStatus {
     #[default]
     Unchecked,
-    Checking,
     ApiSearchFailed {
         error: String,
     },
@@ -113,15 +116,7 @@ pub enum IngredientStatus {
     SearchResults {
         items: Vec<Item>,
     },
-    AiRefusedToSelectItem {
-        alternatives: Vec<Item>,
-    },
-    AiSelectedInvalidItem {
-        alternatives: Vec<Item>,
-    },
-    Alternative {
-        original: String,
-        selected: Item,
+    AiFailsToSelectItem {
         alternatives: Vec<Item>,
     },
     Matched {
@@ -135,7 +130,6 @@ impl Display for IngredientStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IngredientStatus::Unchecked => write!(f, "⏳"),
-            IngredientStatus::Checking => write!(f, "🔍"),
             IngredientStatus::ApiSearchFailed { error } => {
                 write!(f, "⚠️ search failed: {error}")
             }
@@ -143,21 +137,13 @@ impl Display for IngredientStatus {
             IngredientStatus::SearchResults { items } => {
                 write!(f, "🛒 {} items found", items.len())
             }
-            IngredientStatus::AiRefusedToSelectItem { alternatives } => {
+            IngredientStatus::AiFailsToSelectItem { alternatives } => {
                 write!(
                     f,
-                    "🤖 🤷 {} items found, but AI thinks nothing really matches",
+                    "🤖 ❌ AI failed to select an item, {} items found",
                     alternatives.len()
                 )
             }
-            IngredientStatus::AiSelectedInvalidItem { alternatives } => {
-                write!(
-                    f,
-                    "🤖 ⚠️ {} items found, but AI failed to select one",
-                    alternatives.len()
-                )
-            }
-            IngredientStatus::Alternative { .. } => write!(f, "↩️ alternative selected"),
             IngredientStatus::Matched { item, pieces, .. } => {
                 write!(
                     f,
@@ -170,3 +156,10 @@ impl Display for IngredientStatus {
         }
     }
 }
+
+const INGREDIENT_NAME_MAPPINGS: &[(&str, &str)] = &[
+    ("Mehl", "Weizenmehl"),
+    ("Zucker", "Zucker"),
+    ("Salz", "Speisesalz"),
+    ("Ei", "Eier"),
+];

@@ -1,5 +1,5 @@
 [package]
-name = "listoplate"
+name = "recipe_ranger"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-dotenv = { version = "0.15.0", optional = true }
 reqwest = { version = "0.12.2", default-features = false, features = [
   "rustls-tls",
   "json",
@@ -40,16 +39,33 @@ http = "1"
 openai = { version = "1.0.0-alpha.16", default-features = false, features = [
   "rustls",
 ], optional = true }
+uuid = { version = "1.11", features = ["serde", "v4"] }
+jsonwebtoken = { version = "9.3.0", optional = true }
+regex = "1.11.1"
+axum-extra = { version = "0.9.6", features = ["cookie"], optional = true }
+chrono = { version = "0.4.38", features = ["serde"], optional = true }
+surrealdb = { version = "2.1.2", optional = true }
+surrealdb-migrations = { version = "2.0.0", optional = true }
+dotenv = { version = "0.15.0", optional = true }
+rand = "0.8.5"
+bcrypt = "0.16.0"
+random_name_generator = "0.3.6"
+
 
 [features]
 ssr = [
   "dep:axum",
+  "dep:axum-extra",
   "dep:tokio",
   "dep:tower",
   "dep:tower-http",
   "dep:leptos_axum",
   "dep:dotenv",
   "dep:openai",
+  "dep:jsonwebtoken",
+  "dep:chrono",
+  "dep:surrealdb",
+  "dep:surrealdb-migrations",
   "leptos/ssr",
   "leptos_meta/ssr",
   "leptos_router/ssr",

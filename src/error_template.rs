@@ -1,3 +1,4 @@
+use crate::prelude::*;
 use http::status::StatusCode;
 use leptos::*;
 use thiserror::Error;
@@ -35,7 +36,7 @@ pub fn ErrorTemplate(
         .into_iter()
         .filter_map(|(_k, v)| v.downcast_ref::<AppError>().cloned())
         .collect();
-    println!("Errors: {errors:#?}");
+    error!("Errors: {errors:#?}");
 
     #[cfg(feature = "ssr")]
     {
@@ -52,11 +53,10 @@ pub fn ErrorTemplate(
             each=move || { errors.clone().into_iter().enumerate() }
             key=|(index, _error)| *index
             children=move |error| {
-                let error_string = error.1.to_string();
                 let error_code = error.1.status_code();
                 view! {
                     <h2>{error_code.to_string()}</h2>
-                    <p>"Error: " {error_string}</p>
+                    <p>"Da ist was schief gelaufen. Bitte lade die Seite neu."</p>
                 }
             }
         />

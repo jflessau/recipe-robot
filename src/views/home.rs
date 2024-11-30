@@ -1,11 +1,15 @@
+use crate::api::authorized;
 use crate::components::{
     loading_indicator::LoadingIndicator, recipe_input::View as RecipeInput,
     shopping_list::ShoppingList,
 };
 use crate::{prelude::*, shopping_list::Ingredient};
+use leptos_router::Redirect;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum State {
+    CheckAuth,
+    Unauthorized,
     Error {
         recipe_text: String,
         error: String,
@@ -25,6 +29,8 @@ pub enum State {
 impl State {
     pub fn recipe_text(&self) -> String {
         match self {
+            State::CheckAuth => "".to_string(),
+            State::Unauthorized => "".to_string(),
             State::RecipeInput { recipe_text } => recipe_text.clone(),
             State::FindIngredients { recipe_text } => recipe_text.clone(),
             State::Error { recipe_text, .. } => recipe_text.clone(),
@@ -102,8 +108,30 @@ impl State {
 
 #[component]
 pub fn View() -> impl IntoView {
-    let (state, set_state) = create_signal(State::RecipeInput {
-        recipe_text: "".to_string(),
+    log::info!("Home::View");
+    let (state, set_state) = create_signal(State::CheckAuth);
+    create_local_resource(state, move |state| async move {
+        if let State::CheckAuth = state {
+            log::info!("checking auth");
+            match authorized().await {
+                Ok(authorized) => {
+                    if authorized {
+                        log::info!("Authorized");
+                        set_state(State::RecipeInput {
+                            recipe_text: "".to_string(),
+                        });
+                        log::info!("state set to RecipeInput");
+                    } else {
+                        log::warn!("Unauthorized");
+                        set_state(State::Unauthorized);
+                    }
+                }
+                Err(err) => {
+                    log::error!("failed to check auth: {:?}", err);
+                    set_state(State::Unauthorized);
+                }
+            }
+        }
     });
 
     view! {
@@ -113,57 +141,66 @@ pub fn View() -> impl IntoView {
                 src="/img/logo.png"
                 alt="shopping bag with vegetables, fruits and beverages"
             />
-            <h1 class="mb-6 text-m">"koch-doch-einfach.org"</h1>
 
             <div class="w-full flex flex-col items-center justify-start gap-12">
-                {
-                    move || {
-                        match state() {
-                            State::Error { error, .. } => {
-                                view! {
-                                    <p class="w-full text-center font-bold text-error">
-                                        {error.clone()}
-                                    </p>
+                {move || {
+                    match state() {
+                        State::CheckAuth => {
+                            view! {
+                                <LoadingIndicator
+                                    title="Login".to_string()
+                                    subtitle="Bitte warten.".to_string()
+                                />
+                            }
+                                .into_view()
+                        }
+                        State::Unauthorized => view! { <Redirect path="/login" /> }.into_view(),
+                        State::Error { error, .. } => {
+                            view! {
+                                <p class="w-full text-center font-bold text-error">
+                                    {error.clone()}
+                                </p>
 
-                                    <button
-                                        on:click=move |_| set_state(State::RecipeInput {
-                                            recipe_text: state().recipe_text(),
-                                        })
-                                        class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
-                                    >
-                                        <Icon icon=i::TbArrowLoopLeft2 width="0.9rem" height="0.9rem"/>
-                                        "Nochmal versuchen"
-                                    </button>
-                                }.into_view()
-                            },
-                            State::RecipeInput { recipe_text } => {
-                                view! {
-                                    <RecipeInput set_state recipe_text />
-                                }.into_view()
-                            },
-                            State::FindIngredients { .. } => {
-                                view! {
-                                    <LoadingIndicator
-                                        title="Ermittle Zutaten...".to_string()
-                                        subtitle="Ich geb mir große Mühe!".to_string() />
-                                }.into_view()
-                            },
-                            State::ShoppingList { ingredients, .. } => {
-                                view! {
-                                    <button
-                                        on:click=move |_| set_state(state().reset())
-                                        class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
-                                    >
-                                        <Icon icon=i::LuFileEdit width="0.9rem" height="0.9rem"/>
-                                        "Rezept ändern"
-                                    </button>
+                                <button
+                                    on:click=move |_| set_state(State::RecipeInput {
+                                        recipe_text: state().recipe_text(),
+                                    })
+                                    class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
+                                >
+                                    <Icon icon=i::TbArrowLoopLeft2 width="0.9rem" height="0.9rem" />
+                                    "Nochmal versuchen"
+                                </button>
+                            }
+                                .into_view()
+                        }
+                        State::RecipeInput { recipe_text } => {
+                            view! { <RecipeInput set_state recipe_text /> }.into_view()
+                        }
+                        State::FindIngredients { .. } => {
+                            view! {
+                                <LoadingIndicator
+                                    title="Ermittle Zutaten...".to_string()
+                                    subtitle="Ich geb mir große Mühe!".to_string()
+                                />
+                            }
+                                .into_view()
+                        }
+                        State::ShoppingList { ingredients, .. } => {
+                            view! {
+                                <button
+                                    on:click=move |_| set_state(state().reset())
+                                    class="px-2 flex gap-1 items-center text-info text-bold text-s border border-info rounded"
+                                >
+                                    <Icon icon=i::LuFileEdit width="0.9rem" height="0.9rem" />
+                                    "Rezept ändern"
+                                </button>
 
-                                    <ShoppingList ingredients />
-                                }.into_view()
-                            },
+                                <ShoppingList ingredients />
+                            }
+                                .into_view()
                         }
                     }
-                }
+                }}
             </div>
         </div>
     }
