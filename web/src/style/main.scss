@@ -1,0 +1,139 @@
+@use 'sass:color';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+$bg: #fcecbc;
+$fg: #fafbff;
+$mid: #f3d584;
+$contrast: #04152b;
+$attention: #a519ff;
+$info: #09488a;
+$error: #971d00;
+
+$font-family: 'Merriweather', serif;
+
+$max-content-width: 375px;
+
+html {
+	width: 100%;
+}
+
+body {
+	width: 100%;
+	min-height: 100vh;
+	text-align: center;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: start;
+	align-items: center;
+	background: linear-gradient(
+			0deg,
+			rgba($mid, 0.95) 0%,
+			rgba($bg, 0.95) 10%,
+			rgba($bg, 0.95) 90%,
+			rgba($mid, 0.95) 100%
+		),
+		url('/img/noise.jpg');
+	background-blend-mode: darken;
+	position: relative;
+	font-family: $font-family;
+}
+
+#app {
+	min-width: 375px;
+}
+
+a,
+p,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+div,
+img,
+body,
+input,
+form,
+textarea,
+button,
+main,
+html {
+	@text-m;
+	@apply text-contrast;
+	font-family: $font-family;
+	padding: 0;
+	margin: 0;
+
+	box-sizing: border-box;
+	word-break: break-word;
+}
+div {
+	display: flex;
+}
+
+.clickable,
+button {
+	cursor: pointer;
+	user-select: none;
+	--webkit-user-select: none;
+	-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+	&:disabled {
+		opacity: 0.5;
+	}
+}
+
+textarea,
+input {
+	@apply text-m;
+	width: 100%;
+	padding: 0.5rem;
+	border: solid 1px $contrast;
+	outline: none;
+	border-radius: 0.5rem;
+	&:focus {
+		border-color: $info;
+		border-width: 2px;
+	}
+}
+
+textarea {
+	resize: vertical;
+	min-height: 10rem;
+}
+
+button.fancy {
+	@apply text-l;
+	@apply text-fg;
+	padding: 0.5rem 1rem;
+	border: none;
+	background: $attention;
+	font-weight: 800;
+	border-radius: 0.5rem;
+	box-shadow: 0 4px 0 0 color.adjust($attention, $lightness: -20%);
+	&:active {
+		transform: translateY(2.5px);
+		box-shadow: 0 1.5px 0 0 color.adjust($attention, $lightness: -20%);
+	}
+}
+
+.pulsating {
+	animation: pulsate 1.5s ease-out infinite;
+}
+
+@keyframes pulsate {
+	0% {
+		opacity: 0.3;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.3;
+	}
+}

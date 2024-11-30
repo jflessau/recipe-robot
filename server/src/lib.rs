@@ -87,6 +87,10 @@ pub async fn app() -> error::Result<Router> {
 
     let app = Router::new()
         .route("/health", get(health))
+        .route("/auth/join", post(handler::auth::join))
+        .route("/auth/login", post(handler::auth::login))
+        .route("/auth/logout", get(handler::auth::logout))
+        .route("/auth/me", get(handler::auth::me))
         .layer(middleware_stack);
 
     Ok(app)
