@@ -3,22 +3,26 @@
 
 # editor 
 .vscode/
+.vscode/*
+!.vscode/extensions.json
 
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# rust
-/target/
-pkg
-**/*.rs.bk
+.idea
+.DS_Store
 
 #db
-db_data/content
+server/db_data/content
 
-# node
-node_modules/
-test-results/
-end2end/playwright-report/
-playwright/.cache/
+# rust
+server/target/
+**/*.rs.bk
+
+# web
+web/node_modules/
+node_modules
+dist
+dist-ssr
+*.local
