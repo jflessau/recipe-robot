@@ -4,8 +4,6 @@
 
 <img alt="A cute robot holding and looking at a piece of paper with a recipe on it." src="web/public/img/logo.png" width="180px"/>
 
-Web app written in [rust](https://www.rust-lang.org/) and [svelte](https://svelte.dev/).
-
 Here is what it can do for you:
 
 - 📝 Enter the text of a recipe
@@ -14,6 +12,8 @@ Here is what it can do for you:
 - 🛒 Composes a shopping list, with prices, quantities & more
 
 ## Development
+
+Web app is written in [svelte](https://svelte.dev/) and server in [rust](https://www.rust-lang.org/).
 
 1. Insert your credentials in the `.env` file
 2. Start [Surreal](https://surrealdb.com/) database

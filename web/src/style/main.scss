@@ -50,6 +50,7 @@ $max-content-width: 375px;
 
 html {
 	width: 100%;
+	background: $mid;
 }
 
 body {
@@ -63,13 +64,8 @@ body {
 	flex-direction: column;
 	justify-content: start;
 	align-items: center;
-	background: linear-gradient(
-			0deg,
-			rgba($mid, 0.95) 0%,
-			rgba($bg, 0.95) 10%,
-			rgba($bg, 0.95) 90%,
-			rgba($mid, 0.95) 100%
-		),
+	background: $bg;
+	background: linear-gradient(0deg, rgba($mid, 1) 0%, rgba($bg, 0.95) 10%, rgba($bg, 0.95) 90%, rgba($mid, 1) 100%),
 		url('/img/noise.jpg');
 	background-blend-mode: darken;
 	position: relative;
