@@ -1,8 +1,9 @@
 # 🥔 recipe-robot
 
+[![CI](https://github.com/jflessau/recipe-robot/actions/workflows/ci.yml/badge.svg)](https://github.com/jflessau/recipe-robot/actions/workflows/ci.yml)
+
 <img alt="A cute robot holding and looking at a piece of paper with a recipe on it." src="web/public/img/logo.png" width="180px"/>
 
-[![CI](https://github.com/jflessau/recipe-robot/actions/workflows/ci.yml/badge.svg)](https://github.com/jflessau/recipe-robot/actions/workflows/ci.yml)
 Web app written in [rust](https://www.rust-lang.org/) and [svelte](https://svelte.dev/).
 
 Here is what it can do for you:
@@ -46,4 +47,3 @@ bun run dev
 ## Deployment
 
 Docker images are built (and pushed to ghcr.io) within the CI actions.
-For local building of the images, see `./.github/workflows/ci.yml`.
