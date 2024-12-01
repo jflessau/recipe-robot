@@ -1,4 +1,4 @@
-# 🥔 recipe-ranger
+# 🥔 recipe-robot
 
 <img alt="A cute robot holding and looking at a piece of paper with a recipe on it." src="web/public/img/logo.png" width="180px"/>
 
@@ -6,10 +6,10 @@ Web app written in [rust](https://www.rust-lang.org/) and [svelte](https://svelt
 
 Here is what it can do for you:
 
-1. Enter the text of a recipe.
-2. AI extracts the ingredients.
-3. It searches for matching items from grocery stores.
-4. Composes a shopping list, with prices, quantities & more.
+- 📝 Enter the text of a recipe.
+- 🧠 AI extracts the ingredients.
+- 🔍 It searches for matching items from grocery stores.
+- 🛒 Composes a shopping list, with prices, quantities & more.
 
 ## Development
 

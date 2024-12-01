@@ -116,10 +116,10 @@ async fn setup_db() -> Result<Surreal<Any>> {
     .await
     .context("fails to signin")?;
 
-    db.use_ns("default")
-        .use_db("default")
-        .await
-        .context("fails to set namespace")?;
+    db.query("define namespace if not exists default").await?;
+    db.use_ns("default").await?;
+    db.query("define database if not exists default;").await?;
+    db.use_db("default").await?;
 
     MigrationRunner::new(&db)
         .up()

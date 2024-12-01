@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use recipe_ranger::app;
+use recipe_robot::app;
 use std::net::SocketAddr;
 use tracing::info;
 

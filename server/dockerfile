@@ -1,6 +1,6 @@
 FROM rust:latest as builder
 
-WORKDIR /usr/src/recipe_ranger
+WORKDIR /usr/src/recipe_robot
 
 # install system dependencies
 
@@ -21,8 +21,8 @@ RUN cargo install --target x86_64-unknown-linux-musl --path .
 # use multi-stage build to reduce image size
 
 FROM alpine:latest
-COPY --from=builder /usr/local/cargo/bin/recipe_ranger .
+COPY --from=builder /usr/local/cargo/bin/recipe_robot .
 COPY db_data/setup db_data/setup
 COPY .surrealdb /.surrealdb
-ENTRYPOINT ["./recipe_ranger"]
+ENTRYPOINT ["./recipe_robot"]
 

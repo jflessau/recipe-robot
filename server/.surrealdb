@@ -3,7 +3,7 @@
     schema = "full"
 [db]
     address = "ws://localhost:8000"
-    username = "recipe_ranger"
+    username = "recipe_robot"
     password = "muchsecret"
     ns = "default"
     db = "default"

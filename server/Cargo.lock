@@ -3023,7 +3023,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffead9d0a0b45f3e0bc063a244b1779fd53a09d2c2f7282c186a016b1f10a778"
 
 [[package]]
-name = "recipe_ranger"
+name = "recipe_robot"
 version = "0.1.0"
 dependencies = [
  "anyhow",

@@ -71,7 +71,7 @@ jobs:
           bun-version: latest
       - name: lint
         run: |
-          bun i && bun ci
+          cd web && bun i && bun ci
 
   build_web:
     name: "Build: Web"

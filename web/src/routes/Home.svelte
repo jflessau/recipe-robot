@@ -17,7 +17,7 @@
 
 <div class="w-full flex flex-col items-center justify-start gap-8">
 	{#if typeof state === 'string'}
-		<h1 class="w-full text-center text-2xl font-black text-attention">Rezept Ranger</h1>
+		<h1 class="w-full text-center text-2xl font-black text-attention">Rezept Roboter</h1>
 	{/if}
 
 	{#if state === 'LOADING'}

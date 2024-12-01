@@ -6,11 +6,13 @@ services:
       - "8000:8000"
     volumes:
       - ./db_data/content:/data/
+    environment:
+      - SURREAL_NAMESPACE=default
     command:
       [
         "start",
         "--username",
-        "recipe_ranger",
+        "recipe_robot",
         "--password",
         "muchsecret",
         "--strict",
