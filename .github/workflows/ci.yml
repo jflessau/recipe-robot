@@ -20,10 +20,10 @@ jobs:
           override: true
       - name: format
         run: |
-          cargo fmt -- --check
+          cd server && cargo fmt -- --check
       - name: lint
         run: |
-          cargo clippy -- --D warnings
+          cd server && cargo clippy -- -D warnings
 
   build_server:
     name: "Build: Server"

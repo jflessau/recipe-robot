@@ -1,6 +1,3 @@
-define namespace if not exists default;
-define database if not exists default;
-
 -- user 
 define table user schemafull;
 define field password_hash on table user type string assert string::len($value) >= 60;
