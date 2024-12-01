@@ -44,8 +44,7 @@ pub struct Invite {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Me {
     username: String,
-    generated_cost_dollar_total: f64,
-    percentage_of_daily_limit_percent: u8,
+    percentage_of_daily_limit: u8,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -195,10 +194,24 @@ pub async fn me(
         return Err(Error::NotFound);
     };
 
+    let limit = limits().user_daily_dollar;
+    let cost = user_daily_cost(&state.db, &authenticated_user.username).await?;
+
+    let mut percentage = if limit < 0.0001 {
+        100
+    } else if cost < 0.0001 {
+        0
+    } else {
+        ((cost / limit) * 100.0).round() as u8
+    };
+
+    if percentage > 100 {
+        percentage = 100;
+    }
+
     let me = Me {
         username: user.id.key().to_string(),
-        generated_cost_dollar_total: 0.0,     // TODO
-        percentage_of_daily_limit_percent: 0, // TODO
+        percentage_of_daily_limit: percentage,
     };
 
     Ok(Json(me))

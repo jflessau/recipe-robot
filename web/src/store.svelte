@@ -1,14 +1,7 @@
 <script lang="ts" context="module">
 	import { writable } from 'svelte/store';
 	import type { Writable } from 'svelte/store';
-	import { Api } from './api.svelte';
-	import { onMount } from 'svelte';
-
-	interface Me {
-		username: string;
-		generated_cost_dollar_total: number;
-		percentage_of_daily_limit_percent: number;
-	}
+	import { Api, Me } from './api.svelte';
 
 	export const meStore: Writable<Me | null> = writable(null);
 

@@ -2,7 +2,9 @@
 	import LoadingSpinner from '../components/LoadingSpinner.svelte';
 	import Ingredient from '../components/Ingredient.svelte';
 	import Error from '../components/Error.svelte';
+	import Me from '../components/Me.svelte';
 	import { Api, Ingredient as IngredientType, Item } from './../api.svelte';
+	import { getMe } from './../store.svelte';
 	import NotebookPen from '~icons/lucide/notebook-pen';
 	import Trash2 from '~icons/lucide/trash-2';
 
@@ -19,6 +21,7 @@
 		alt="shopping bag with various items like apples, bottles, fruits and vegetables"
 		class="w-32"
 	/>
+
 	{#if typeof state === 'string'}
 		<h1 class="w-full text-center text-2xl font-black text-attention">Rezept Ranger</h1>
 	{/if}
@@ -45,6 +48,7 @@
 				try {
 					let r = await Api.recipeIngredients(recipe);
 					state = r.data.ingredients;
+					getMe();
 				} catch (e) {
 					state = 'ERROR';
 					console.error(e);
@@ -118,4 +122,6 @@
 			</div>
 		{/if}
 	{/if}
+
+	<Me />
 </div>

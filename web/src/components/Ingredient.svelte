@@ -9,6 +9,7 @@
 	import CircleCheck from '~icons/lucide/circle-check';
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { getMe } from './../store.svelte';
 
 	export let ingredient: Ingredient;
 
@@ -23,6 +24,7 @@
 			try {
 				let r = await Api.ingredientItems(ingredient);
 				dispatch('update', r.data);
+				getMe();
 			} catch (e) {
 				state = 'ERROR';
 				console.error(e);

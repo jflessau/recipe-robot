@@ -62,7 +62,7 @@
 		async me<
 			T = {
 				status: number;
-				data: { username: string; generated_cost_dollar_total: number; percentage_of_daily_limit_percent: number };
+				data: Me;
 			}
 		>(): Promise<T> {
 			return this.client.get(`/auth/me`);
@@ -84,6 +84,11 @@
 	export const Api = new Client();
 
 	// types
+
+	export interface Me {
+		username: string;
+		percentageOfDailyLimit: number;
+	}
 
 	export interface Ingredient {
 		id: string;

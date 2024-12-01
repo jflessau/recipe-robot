@@ -239,15 +239,83 @@ struct IngredientItemMatch {
     pieces_required: i64,
 }
 
-pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Error> {
-    let application_wide_daily_limit_dollar = std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct AiCostLimit {
+    pub application_daily_dollar: f64,
+    pub user_daily_dollar: f64,
+}
+
+pub fn limits() -> AiCostLimit {
+    let application_daily_dollar = std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
         .unwrap_or("1.0".to_string())
         .parse::<f64>()
         .unwrap_or(1.0);
-    let user_daily_limit_dollar = std::env::var("USER_DAILY_LIMIT_DOLLAR")
+    let user_daily_dollar = std::env::var("USER_DAILY_LIMIT_DOLLAR")
         .unwrap_or("0.1".to_string())
         .parse::<f64>()
         .unwrap_or(0.1);
+
+    AiCostLimit {
+        application_daily_dollar,
+        user_daily_dollar,
+    }
+}
+
+pub async fn user_daily_cost(db: &Surreal<Any>, username: &String) -> Result<f64, Error> {
+    let Some(user_daily_cost): Option<f64> = db
+        .query(
+            r#"
+                (   
+                    select 
+                        math::sum(->cash_flow.amount) as sum
+                    from 
+                        generates
+                    where 
+                        created_at > time::now() - 1d
+                        and array::first(<-user) = $user
+                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0;
+            "#,
+        )
+        .bind(("user", thing(&format!("user:{username}"))?))
+        .await?
+        .take(0)?
+    else {
+        error!("failed to query user daily costs");
+        return Err(Error::InternalServer);
+    };
+
+    Ok(user_daily_cost)
+}
+
+pub async fn user_total_cost(db: &Surreal<Any>, username: &String) -> Result<f64, Error> {
+    let Some(user_daily_cost): Option<f64> = db
+        .query(
+            r#"
+                (   
+                    select 
+                        math::sum(->cash_flow.amount) as sum
+                    from 
+                        generates
+                    where 
+                        array::first(<-user) = $user
+                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0;
+            "#,
+        )
+        .bind(("user", thing(&format!("user:{username}"))?))
+        .await?
+        .take(0)?
+    else {
+        error!("failed to query user daily costs");
+        return Err(Error::InternalServer);
+    };
+
+    Ok(user_daily_cost)
+}
+
+pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Error> {
+    let limits = limits();
+    let application_daily_dollar = limits.application_daily_dollar;
+    let user_daily_limit_dollar = limits.user_daily_dollar;
 
     // check if application wide limit is exceeded
 
@@ -271,35 +339,15 @@ pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Er
         return Err(Error::InternalServer);
     };
 
-    info!("💶 application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_wide_daily_limit_dollar:.2}");
-    if application_wide_daily_costs > application_wide_daily_limit_dollar {
+    info!("💶 application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_daily_dollar:.2}");
+    if application_wide_daily_costs > application_daily_dollar {
         warn!(
-            "💶🔥 application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_wide_daily_limit_dollar:.2}"
+            "💶🔥 application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_daily_dollar:.2}"
         );
         return Err(Error::TooManyRequests);
     }
 
-    let Some(user_daily_costs): Option<f64> = db
-        .query(
-            r#"
-                (   
-                    select 
-                        math::sum(->cash_flow.amount) as sum
-                    from 
-                        generates
-                    where 
-                        created_at > time::now() - 1d
-                        and array::first(<-user) = $user
-                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0;
-            "#,
-        )
-        .bind(("user", thing(&format!("user:{username}"))?))
-        .await?
-        .take(0)?
-    else {
-        error!("failed to query user daily costs");
-        return Err(Error::InternalServer);
-    };
+    let user_daily_costs = user_daily_cost(db, username).await?;
 
     if user_daily_costs > user_daily_limit_dollar {
         warn!(
