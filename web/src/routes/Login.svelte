@@ -64,7 +64,7 @@
 					id="username-code-input"
 					type="text"
 					class="text-center"
-					placeholder="Einladungscode"
+					placeholder="Benutzername"
 					bind:value={username}
 				/>
 			</div>
@@ -75,7 +75,7 @@
 					id="password-code-input"
 					type="password"
 					class="text-center"
-					placeholder="Einladungscode"
+					placeholder="Passwort"
 					bind:value={password}
 				/>
 			</div>

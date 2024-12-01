@@ -8,19 +8,24 @@ pub struct Ingredient {
     pub name: String,
     pub probably_at_home: bool,
     pub unit: String,
-    pub quantity: usize,
+    pub quantity: i64,
 
     item: Option<Item>,
-    pub item_quantity: Option<usize>,
+    #[serde(default)]
+    pub item_quantity: i64,
     #[serde(default)]
     pub alternatives: Vec<Item>,
 }
 
 impl Ingredient {
-    pub fn select_item(&mut self, id: String, pieces: Option<usize>) {
+    pub fn item(&self) -> Option<Item> {
+        self.item.clone()
+    }
+
+    pub fn select_item(&mut self, id: String, pieces: Option<i64>) {
         if let Some(item) = self.alternatives.iter().find(|i| i.id == id) {
             self.item = Some(item.clone());
-            self.item_quantity = pieces;
+            self.item_quantity = pieces.unwrap_or(1);
         }
     }
 

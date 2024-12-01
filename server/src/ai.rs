@@ -43,11 +43,13 @@ pub struct Ai {
     max_chars: i32,
 }
 
-impl Ai {
-    pub fn new() -> Self {
+impl Default for Ai {
+    fn default() -> Self {
         Self { max_chars: 16_000 }
     }
+}
 
+impl Ai {
     async fn ask(
         &self,
         db: &Surreal<Any>,
@@ -112,14 +114,13 @@ impl Ai {
             return Err(Error::InternalServer);
         };
 
-        // TODO
-        // let ai_usages = vec![
-        //     AiUsage::input_token(input_message.chars().count()),
-        //     AiUsage::output_token(output_message.chars().count()),
-        // ];
-        // if let Err(err) = CashFlow::attribute_ai_costs(db, username, ai_usages).await {
-        //     error!("failed to attribute ai costs: {:?}", err);
-        // }
+        let ai_usages = vec![
+            AiUsage::input_token(input_message.chars().count()),
+            AiUsage::output_token(output_message.chars().count()),
+        ];
+        if let Err(err) = CashFlow::attribute_ai_costs(db, username, ai_usages).await {
+            error!("failed to attribute ai costs: {:?}", err);
+        }
 
         Ok(output_message)
     }
@@ -235,7 +236,7 @@ impl Ai {
 #[derive(Debug, Clone, Deserialize, Default)]
 struct IngredientItemMatch {
     item_index: Option<usize>,
-    pieces_required: usize,
+    pieces_required: i64,
 }
 
 pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Error> {
@@ -253,15 +254,15 @@ pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Er
     let Some(application_wide_daily_costs): Option<f64> = db
         .query(
             r#"
-                    (
-                        select 
-                            math::sum(->cash_flow.amount) as sum
-                        from 
-                            generates
-                        where 
-                            created_at > time::now() - 1d
-                    ).fold(100, |$a, $b| $a - $b.sum) / -1_000_000.0
-                "#,
+                (
+                    select 
+                        math::sum(->cash_flow.amount) as sum
+                    from 
+                        generates
+                    where 
+                        created_at > time::now() - 1d
+                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0
+            "#,
         )
         .await?
         .take(0)?
@@ -270,29 +271,27 @@ pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Er
         return Err(Error::InternalServer);
     };
 
-    info!(
-            "application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_wide_daily_limit_dollar:.2}"
-        );
+    info!("💶 application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_wide_daily_limit_dollar:.2}");
     if application_wide_daily_costs > application_wide_daily_limit_dollar {
         warn!(
-                "application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_wide_daily_limit_dollar:.2}"
-            );
+            "💶🔥 application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_wide_daily_limit_dollar:.2}"
+        );
         return Err(Error::TooManyRequests);
     }
 
     let Some(user_daily_costs): Option<f64> = db
         .query(
             r#"
-                    (   
-                        select 
-                            math::sum(->cash_flow.amount) as sum
-                        from 
-                            generates
-                        where 
-                            created_at > time::now() - 1d
-                            and array::first(<-user) = $user
-                    ).fold(100, |$a, $b| $a - $b.sum) / -1_000_000.0;
-                "#,
+                (   
+                    select 
+                        math::sum(->cash_flow.amount) as sum
+                    from 
+                        generates
+                    where 
+                        created_at > time::now() - 1d
+                        and array::first(<-user) = $user
+                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0;
+            "#,
         )
         .bind(("user", thing(&format!("user:{username}"))?))
         .await?

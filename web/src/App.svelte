@@ -16,7 +16,7 @@
 </script>
 
 <Router>
-	<div class="w-full flex flex-col justify-start items-center gap-16 pt-8">
+	<div class="w-full flex flex-col justify-start items-center gap-16 py-8">
 		{#if me}
 			<Route path="/" component={Home} />
 		{:else}

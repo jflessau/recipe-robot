@@ -17,4 +17,10 @@ impl Vendor {
             }
         }
     }
+
+    pub fn name(&self) -> String {
+        match self {
+            Vendor::Rewe { .. } => "rewe".to_string(),
+        }
+    }
 }

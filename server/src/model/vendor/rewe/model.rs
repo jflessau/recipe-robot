@@ -68,8 +68,6 @@ pub struct Listing {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Pricing {
     #[serde(rename = "currentRetailPrice")]
-    pub current_retail_price: usize,
-    // #[serde(rename = "basePrice")]
-    // pub base_price: Option<usize>,
+    pub current_retail_price: i64,
     pub grammage: String,
 }

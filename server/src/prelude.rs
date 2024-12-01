@@ -1,6 +1,6 @@
 pub use crate::{
     ai::{Ai, AiUsage},
-    db::{Relation, User},
+    db::{IngredientDb, ItemDb, Recipe, Relation, Requires, Seeks, User},
     error::Error,
     handler::auth::AuthenticatedUser,
     model::{cash_flow::CashFlow, ingredient::Ingredient, item::Item, vendor::Vendor},

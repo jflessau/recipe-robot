@@ -1,67 +1,16 @@
 <script lang="ts">
 	import LoadingSpinner from '../components/LoadingSpinner.svelte';
+	import Ingredient from '../components/Ingredient.svelte';
 	import Error from '../components/Error.svelte';
-	import { Api, Ingredient, Item } from './../api.svelte';
+	import { Api, Ingredient as IngredientType, Item } from './../api.svelte';
 	import NotebookPen from '~icons/lucide/notebook-pen';
-	import NotebookText from '~icons/lucide/notebook-text';
-	import Basket from '~icons/lucide/shopping-basket';
-	import Coins from '~icons/lucide/coins';
-	import FileWaring from '~icons/lucide/file-warning';
-	import CirclePlus from '~icons/lucide/circle-plus';
-	import CircleMinus from '~icons/lucide/circle-minus';
-	import Banknote from '~icons/lucide/banknote';
-	import CheckCircle from '~icons/lucide/check-circle';
+	import Trash2 from '~icons/lucide/trash-2';
 
 	$: recipe = '';
-	let state: 'IDLE' | 'LOADING' | 'ERROR' | Ingredient[] = 'IDLE';
-	// $: state = state;
-
-	$: state = [
-		{
-			id: '1',
-			name: 'Tomate',
-			probablyAtHome: true,
-			unit: 'Stück',
-			quantity: 2,
-			item: {
-				id: '1',
-				name: 'Tomate',
-				quantity: 2,
-				priceCent: 100,
-				url: 'https://www.google.com',
-				imageUrl: 'https://jflessau.com/img/placeholder.jpg'
-			},
-			itemQuantity: 1,
-			alternatives: [
-				{
-					id: '2',
-					name: 'Tomate',
-					quantity: 2,
-					priceCent: 100,
-					url: 'https://www.google.com',
-					imageUrl: 'https://jflessau.com/img/placeholder.jpg'
-				},
-				{
-					id: '2',
-					name: 'Cherrytomaten',
-					quantity: 2,
-					priceCent: 100,
-					url: 'https://www.google.com',
-					imageUrl: 'https://jflessau.com/img/placeholder.jpg'
-				}
-			]
-		},
-		{
-			id: '2',
-			name: 'Tomate',
-			probablyAtHome: true,
-			unit: 'Stück',
-			quantity: 0,
-			item: null,
-			itemQuantity: 1,
-			alternatives: []
-		}
-	];
+	let state: 'IDLE' | 'LOADING' | 'ERROR' | IngredientType[] = 'IDLE';
+	$: state = typeof state === 'string' ? state : [...state];
+	$: totalCent =
+		typeof state === 'string' ? 0 : state.reduce((acc, i) => acc + (i.item?.priceCent || 0) * i.itemQuantity, 0);
 </script>
 
 <div class="w-full flex flex-col items-center justify-start gap-8">
@@ -125,89 +74,48 @@
 			Rezept ändern
 		</button>
 
+		{#if state.filter((i) => i.probablyAtHome).length > 0}
+			<div class="w-full flex flex-col justify-center items-center gap-4">
+				<p class="max-w-96 text-s font-bold">
+					Diese Zutaten hast du wahrscheinlich schon zu Hause. Klicke sie an um sie zu entfernen.
+				</p>
+				<div class="w-full flex flex-row flex-wrap items-center justify-center gap-3">
+					{#each state.filter((i) => i.probablyAtHome) as i}
+						<button
+							class="px-2 py-1 text-s text-bold text-error gap-2 rounded border border-error flex items-center justify-center"
+							on:click={() => {
+								state = state.filter((s) => s.id !== i.id);
+							}}
+						>
+							<Trash2 class="w-5 h-5 text-success" />
+							{i.name}
+						</button>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
 		<h1 class="w-full text-center text-xl font-black">Deine Einkaufsliste</h1>
 
-		<div class="w-full flex flex-col items-start justify-start gap-2">
-			{#each state as i}
-				<div class="w-full flex bg-mid p-3 rounded-lg ingredient-list-item">
-					{#if i.item}
-						<div class="w-full flex-col items-start justify-start gap-1.5">
-							<div class="w-full flex flex-row items-center justify-start gap-3">
-								<NotebookText class="w-5 h-5" />
-								<p class="text-s">
-									{i.name}
-								</p>
-								<p class="opacity-50 text-s">({i.quantity} {i.unit})</p>
-							</div>
-							<div class="w-full flex flex-row items-center justify-start gap-2">
-								<Basket class="w-6 h-6" />
-								<p class="font-bold text-attention">
-									{#if i.item.url}
-										<a href={i.item.url || '#'} target="_blank" rel="noopener noreferrer" class="text-attention">
-											{i.item.name}
-										</a>
-									{:else}
-										{i.item.name}
-									{/if}
-								</p>
-							</div>
-							{#if i.item.priceCent && i.item.quantity}
-								<div class="w-full flex flex-row items-center justify-start gap-3">
-									<Coins class="w-5 h-5" />
-									<p class="text-m font-bold">{((i.item.priceCent * i.item.quantity) / 100).toFixed(2)} €</p>
-									<p class="text-s opacity-50">({(i.item.priceCent / 100).toFixed(2)} € / Stück)</p>
-								</div>
-							{/if}
-							<button class="underline text-info text-s pt-2">mehr infos</button>
-							<div class="w-full flex flex-col items-start justify-start">
-								<img src={i.item.imageUrl} alt={i.item.name} class="w-48 rounded object-contain" />
-							</div>
-							{#if i.alternatives}
-								<p class="pt-2 w-full text font-bold text-left">Alternativen</p>
-							{/if}
-							<div class="w-full flex flex-col overflow-hidden rounded bg-bg">
-								{#each i.alternatives as a}
-									<div class="item clickable bg-bg w-full px-3 py-1 flex flex-row items-center justify-start gap-3">
-										{#if (i.item.id = a.id)}
-											<CheckCircle class="w-5 h-5 text-success" />
-										{/if}
-										<button class="w-full flex flex-col justify-start items-start">
-											<p class="text-s font-bold">{a.name}</p>
-											{#if a.priceCent}
-												<p class="text-s">{(a.priceCent / 100).toFixed(2)} €</p>
-											{/if}
-										</button>
-									</div>
-								{/each}
-							</div>
-						</div>
-						<div class="w-12 flex flex-col">
-							<button class="w-full p-1 py-2 flex items-center justify-center bg-bg rounded-t">
-								<CirclePlus class="w-5 h-5" />
-							</button>
-							<div class="w-full flex items-center justify-center border-y border-mid">
-								<p class="p-1 text-m font-bold bg-bg w-full">{i.item.quantity}<sub class="pl-0.5">x</sub></p>
-							</div>
-							<button class="w-full px-1 py-2 flex items-center justify-center bg-bg rounded-b">
-								<CircleMinus class="w-5 h-5" />
-							</button>
-						</div>
-					{:else}
-						<div class="w-full flex-col items-start justify-start gap-2">
-							<div class="w-full flex flex-row items-center justify-start gap-2">
-								<NotebookText class="w-5 h-5" />
-								<p class="text-s">
-									{i.name}
-								</p>
-							</div>
-							<div class="w-full flex flex-row items-center justify-start gap-2">
-								<FileWaring class="w-5 h-5 text-error" />
-								<p class="font-bold text-s text-error">Keine passenden Produkte gefunden</p>
-							</div>
-						</div>
-					{/if}
-				</div>
-			{/each}
-		</div>
+		{#if state.length === 0}
+			<p class="text-center text-s font-bold">...ist leer</p>
+		{:else}
+			<p class="font-bold text-m">{(totalCent / 100).toFixed(2)} €</p>
+			<div class="w-full flex flex-col items-start justify-start gap-2">
+				{#each state as i}
+					<Ingredient
+						ingredient={i}
+						on:update={(e) => {
+							state = state.map((s) => {
+								if (s.id === e.detail.id) {
+									return e.detail;
+								}
+								return s;
+							});
+						}}
+					/>
+				{/each}
+			</div>
+		{/if}
 	{/if}
 </div>

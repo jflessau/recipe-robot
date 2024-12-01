@@ -4,8 +4,8 @@ use crate::prelude::*;
 pub struct Item {
     pub id: String,
     pub name: String,
-    pub quantity: Option<String>,
-    pub price_cent: Option<usize>,
+    pub grammage: Option<String>,
+    pub price_cent: Option<i64>,
     pub url: Option<String>,
     pub image_url: Option<String>,
 }

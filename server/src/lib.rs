@@ -95,6 +95,7 @@ pub async fn app() -> error::Result<Router> {
             "/recipe/ingredients",
             post(handler::ingredient::get_recipe_ingredients),
         )
+        .route("/ingredient/items", post(handler::ingredient::get_items))
         .layer(middleware_stack);
 
     Ok(app)

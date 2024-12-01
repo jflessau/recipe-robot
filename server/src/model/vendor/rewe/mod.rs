@@ -73,7 +73,7 @@ impl Rewe {
                 Item {
                     id: new_id(),
                     name: p.name.clone(),
-                    quantity: pricing.clone().map(|p| p.grammage),
+                    grammage: pricing.clone().map(|p| p.grammage),
                     price_cent: pricing.clone().map(|p| p.current_retail_price),
                     url: Some(format!("https://www.rewe.de/produkte/{}", p.id)),
                     image_url: p.media.images.into_iter().next().map(|i| i.links.link.href),

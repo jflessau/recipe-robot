@@ -72,6 +72,10 @@
 			return this.client.post(`/recipe/ingredients`, { text: recipe });
 		}
 
+		async ingredientItems<T = { status: number; data: Ingredient }>(ingredient: Ingredient): Promise<T> {
+			return this.client.post(`/ingredient/items`, { ingredient });
+		}
+
 		async logout<T = { status: number }>(): Promise<T> {
 			return this.client.get(`/auth/logout`);
 		}
@@ -88,14 +92,14 @@
 		unit: string;
 		quantity: number;
 		item: Item | null;
-		itemQuantity: number | null;
+		itemQuantity: number;
 		alternatives: Item[];
 	}
 
 	export interface Item {
 		id: string;
 		name: string;
-		quantity: number | null;
+		grammage: string | null;
 		priceCent: number | null;
 		url: string | null;
 		imageUrl: string | null;

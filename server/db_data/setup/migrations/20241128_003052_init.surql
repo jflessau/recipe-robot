@@ -52,8 +52,8 @@ define index unique_seeks on table seeks columns in, out unique;
 define table item schemafull;
 define field name on table item type string assert string::len($value) > 0 readonly;
 define field vendor on table item type "rewe" | "edeka" | "lidl" | "aldi" | "netto" | "penny" | "real" | "kaufland" readonly;
+define field grammage on table item type option<string> readonly;
 define field price_cent on table item type option<int> assert $value >= 0 readonly;
-define field quantity on table item type option<string> readonly;
 define field url on table item type option<string> readonly;
 define field image_url on table item type option<string> readonly;
 
