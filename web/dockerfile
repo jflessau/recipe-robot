@@ -4,6 +4,8 @@ RUN npm i -g bun
 RUN bun i
 RUN bun run build
 
+RUN ls -r /dist/img 
+
 FROM nginx:1.27
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /dist/ /var/www/

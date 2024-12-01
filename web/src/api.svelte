@@ -3,6 +3,9 @@
 	import axios, { type AxiosInstance } from 'axios';
 
 	let baseUrl: string | boolean = import.meta.env.VITE_API_BASE_URL_LOCAL;
+	if (import.meta.env.MODE === 'production') {
+		baseUrl = import.meta.env.VITE_API_BASE_URL_REMOTE;
+	}
 
 	export const apiUrl: string = baseUrl.toString();
 
