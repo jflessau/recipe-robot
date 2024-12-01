@@ -46,7 +46,6 @@
 
 		/* eslint-disable */
 		handleError(error: any) {
-			console.error(error);
 			return Promise.reject(error);
 		}
 		/* eslint-enable */

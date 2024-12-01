@@ -11,8 +11,7 @@
 		"format:check": "prettier --check .",
 		"lint": "eslint .",
 		"check-svelte": "svelte-check --tsconfig ./tsconfig.json",
-		"audit": "npm audit --audit-level=low",
-		"ci": "npm run format:check && npm run lint && npm run check-svelte && npm run audit"
+		"ci": "bun format:check && bun lint && bun check-svelte"
 	},
 	"devDependencies": {
 		"@iconify/json": "^2.2.278",
@@ -24,7 +23,6 @@
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-svelte": "^2.35.1",
-		"leaflet": "^1.9.4",
 		"node-sass": "^9.0.0",
 		"prettier": "^3.2.5",
 		"prettier-plugin-svelte": "^3.1.2",

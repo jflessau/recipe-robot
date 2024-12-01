@@ -17,13 +17,13 @@ module.exports = {
 		},
 		extend: {
 			fontFamily: {
-				noto: ['Noto Serif', 'sans-serif']
+				noto: ['Merriweather', 'sans-serif']
 			},
 			fontWeight: {
 				thin: '300',
 				regular: '400',
-				bold: '600',
-				black: '800'
+				bold: '700',
+				black: '900'
 			},
 			fontSize: {
 				xs: '0.6rem',

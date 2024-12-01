@@ -12,6 +12,7 @@ pub struct ReweConfig {
 
 #[derive(Debug)]
 pub struct Rewe {
+    #[allow(dead_code)]
     zip_code: String,
 }
 

@@ -16,9 +16,16 @@
 </script>
 
 <Router>
-	<div class="w-full flex flex-col justify-start items-center gap-16 py-8">
+	<div class="w-full flex flex-col justify-start items-center gap-8 py-8">
+		<img
+			src="/img/logo.png"
+			alt="shopping bag with various items like apples, bottles, fruits and vegetables"
+			class="w-40"
+		/>
 		{#if me}
 			<Route path="/" component={Home} />
+			<Route path="/join" component={Home} />
+			<Route path="/login" component={Home} />
 		{:else}
 			<Route path="/" component={Login} />
 			<Route path="/join" component={Join} />

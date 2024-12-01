@@ -221,8 +221,8 @@ impl Ai {
         // check if index of match is in range
 
         let Some(item) = ingredient.alternatives.get(index).cloned() else {
-            error!("ai selected item index out of range for ingredient: {ingredient:?}");
-            return Err(Error::InternalServer);
+            error!("ai selected item index out of range");
+            return Ok(());
         };
 
         // set item
@@ -241,24 +241,48 @@ struct IngredientItemMatch {
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct AiCostLimit {
-    pub application_daily_dollar: f64,
-    pub user_daily_dollar: f64,
+    pub application_daily: f64, // in dollar
+    pub user_daily: f64,        // in dollar
 }
 
 pub fn limits() -> AiCostLimit {
-    let application_daily_dollar = std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
+    let application_daily = std::env::var("APPLICATION_WIDE_DAILY_LIMIT_DOLLAR")
         .unwrap_or("1.0".to_string())
         .parse::<f64>()
         .unwrap_or(1.0);
-    let user_daily_dollar = std::env::var("USER_DAILY_LIMIT_DOLLAR")
+    let user_daily = std::env::var("USER_DAILY_LIMIT_DOLLAR")
         .unwrap_or("0.1".to_string())
         .parse::<f64>()
         .unwrap_or(0.1);
 
     AiCostLimit {
-        application_daily_dollar,
-        user_daily_dollar,
+        application_daily,
+        user_daily,
     }
+}
+
+pub async fn application_daily_cost(db: &Surreal<Any>) -> Result<f64, Error> {
+    let Some(application_daily_cost): Option<f64> = db
+        .query(
+            r#"
+                (
+                    select 
+                        math::sum(->cash_flow.amount) as sum
+                    from 
+                        generates
+                    where 
+                        created_at > time::now() - 1d
+                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0
+            "#,
+        )
+        .await?
+        .take(0)?
+    else {
+        error!("failed to query application wide daily costs");
+        return Err(Error::InternalServer);
+    };
+
+    Ok(application_daily_cost)
 }
 
 pub async fn user_daily_cost(db: &Surreal<Any>, username: &String) -> Result<f64, Error> {
@@ -314,44 +338,25 @@ pub async fn user_total_cost(db: &Surreal<Any>, username: &String) -> Result<f64
 
 pub async fn check_limits(db: &Surreal<Any>, username: &String) -> Result<(), Error> {
     let limits = limits();
-    let application_daily_dollar = limits.application_daily_dollar;
-    let user_daily_limit_dollar = limits.user_daily_dollar;
+    let application_daily_limit = limits.application_daily;
+    let user_daily_limit = limits.user_daily;
 
     // check if application wide limit is exceeded
 
-    let Some(application_wide_daily_costs): Option<f64> = db
-        .query(
-            r#"
-                (
-                    select 
-                        math::sum(->cash_flow.amount) as sum
-                    from 
-                        generates
-                    where 
-                        created_at > time::now() - 1d
-                ).fold(100, |$a, $b| $a + $b.sum) / 1_000_000.0
-            "#,
-        )
-        .await?
-        .take(0)?
-    else {
-        error!("failed to query application wide daily costs");
-        return Err(Error::InternalServer);
-    };
-
-    info!("💶 application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_daily_dollar:.2}");
-    if application_wide_daily_costs > application_daily_dollar {
+    let application_wide_daily_costs = application_daily_cost(db).await?;
+    info!("💶 application wide daily costs: ${application_wide_daily_costs:.2}, limit: ${application_daily_limit:.2}");
+    if application_wide_daily_costs > application_daily_limit {
         warn!(
-            "💶🔥 application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_daily_dollar:.2}"
+            "💶🔥 application wide daily limit exceeded: ${application_wide_daily_costs:.2} > ${application_daily_limit:.2}"
         );
         return Err(Error::TooManyRequests);
     }
 
     let user_daily_costs = user_daily_cost(db, username).await?;
 
-    if user_daily_costs > user_daily_limit_dollar {
+    if user_daily_costs > user_daily_limit {
         warn!(
-                "user '{username}' exceeded daily limit: ${user_daily_costs:.2} > ${user_daily_limit_dollar:.2}"
+                "user '{username}' exceeded daily limit: ${user_daily_costs:.2} > ${user_daily_limit:.2}"
             );
         return Err(Error::PaymentRequired);
     }

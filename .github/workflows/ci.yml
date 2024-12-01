@@ -5,9 +5,30 @@ on:
       - main
 
 jobs:
-  build_and_publish_server:
-    name: "Build and publish: Server"
+  lint_server:
+    name: "Lint: Server"
     runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+      - name: install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy
+          override: true
+      - name: format
+        run: |
+          cargo fmt -- --check
+      - name: lint
+        run: |
+          cargo clippy -- --D warnings
+
+  build_server:
+    name: "Build: Server"
+    runs-on: ubuntu-latest
+    # needs: [lint_server] # it is a side project, let's skip linting for now
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -34,9 +55,28 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-server:latest
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}-server:${{ steps.shortened_hash.outputs.sha_short }}
 
-  build_and_publish_web:
-    name: "Build and publish: Web"
+  lint_web:
+    name: "Lint: Web"
     runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.0
+      - name: install bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: lint
+        run: |
+          bun i && bun ci
+
+  build_web:
+    name: "Build: Web"
+    runs-on: ubuntu-latest
+    needs: [lint_web]
     steps:
       - name: Checkout
         uses: actions/checkout@v2

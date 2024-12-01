@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { Api, Ingredient, Item } from './../api.svelte';
+	import { Api, Ingredient } from './../api.svelte';
+	import { onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
+	import { getMe } from './../store.svelte';
 	import NotebookText from '~icons/lucide/notebook-text';
 	import Basket from '~icons/lucide/shopping-basket';
 	import Coins from '~icons/lucide/coins';
@@ -7,9 +10,6 @@
 	import CirclePlus from '~icons/lucide/circle-plus';
 	import CircleMinus from '~icons/lucide/circle-minus';
 	import CircleCheck from '~icons/lucide/circle-check';
-	import { onMount } from 'svelte';
-	import { createEventDispatcher } from 'svelte';
-	import { getMe } from './../store.svelte';
 
 	export let ingredient: Ingredient;
 

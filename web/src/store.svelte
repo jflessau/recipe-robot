@@ -16,7 +16,7 @@
 				console.error(`getMe failed with status: ${r.status}`);
 			}
 		} catch (e) {
-			console.error(e);
+			meStore.set(null);
 		}
 	}
 </script>

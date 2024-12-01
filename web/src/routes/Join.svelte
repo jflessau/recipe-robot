@@ -12,11 +12,6 @@
 </script>
 
 <div class="w-full flex flex-col items-center justify-start gap-8">
-	<img
-		src="/img/logo.png"
-		alt="shopping bag with various items like apples, bottles, fruits and vegetables"
-		class="w-32"
-	/>
 	<h1 class="w-full text-center text-2xl font-black text-attention">
 		{state === 'SUCCESS' ? 'Registrierung erfolgreich!' : 'Registrieren'}
 	</h1>
@@ -57,7 +52,7 @@
 			}}
 		>
 			<div class="w-full flex flex-col gap-1 text-s font-bold">
-				<label for="username-input" class="text-center">Einladungscode</label>
+				<label for="invite-code-input" class="text-center">Einladungscode</label>
 				<input
 					id="invite-code-input"
 					type="text"

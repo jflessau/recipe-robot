@@ -1,5 +1,5 @@
 pub use crate::{
-    ai::{limits, user_daily_cost, user_total_cost, Ai, AiUsage},
+    ai::{application_daily_cost, limits, user_daily_cost, user_total_cost, Ai, AiUsage},
     db::{IngredientDb, ItemDb, Recipe, Relation, Requires, Seeks, User},
     error::Error,
     handler::auth::AuthenticatedUser,

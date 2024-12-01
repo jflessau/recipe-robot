@@ -135,14 +135,21 @@ pub async fn join(
         return Err(Error::InternalServer);
     };
 
-    let r = state
+    let Some(_r) = state
         .db
         .insert::<Vec<Relation>>("spawns")
         .relation(Relation {
             r#in: thing(&format!("invite:{}", payload.invite_code))?,
             out: thing(&format!("user:{username}"))?,
         })
-        .await;
+        .await?
+        .first()
+    else {
+        error!("failed to create invite -> user relation");
+        return Err(Error::InternalServer);
+    };
+
+    info!("🎉 {username} joined!");
 
     Ok(Json(SignupOut { username, password }))
 }
@@ -160,26 +167,40 @@ pub async fn login(
         return Err(Error::Forbidden("invalid password".to_string()));
     }
 
-    info!("encoding jwt");
+    info!("🔑 logging in user: {}", user.id.key());
+
     let jwt = encode(
         &Header::default(),
         &Claims::new(user.id.key().to_string()),
         &EncodingKey::from_base64_secret(&state.jwt_secret).unwrap(),
     )?;
 
-    let mut cookie = Cookie::build(("token", jwt))
+    let mut cookie: Cookie = Cookie::build(("token", jwt))
         .path("/")
         .secure(true)
         .http_only(true)
-        .finish();
+        .into();
 
     cookie.set_expires(OffsetDateTime::now_utc() + CookieDuration::days(TOKEN_AGE_IN_DAYS));
 
     Ok(jar.add(cookie))
 }
 
-pub async fn logout(jar: CookieJar) -> Result<CookieJar, Error> {
-    Ok(jar.remove("token"))
+pub async fn logout(
+    authenticated_user: AuthenticatedUser,
+    jar: CookieJar,
+) -> Result<CookieJar, Error> {
+    info!("👋 logging out user: {}", authenticated_user.username);
+
+    let mut cookie: Cookie = Cookie::build(("token", ""))
+        .path("/")
+        .secure(true)
+        .http_only(true)
+        .into();
+
+    cookie.set_expires(OffsetDateTime::now_utc() - CookieDuration::days(1));
+
+    Ok(jar.add(cookie))
 }
 
 pub async fn me(
@@ -194,17 +215,33 @@ pub async fn me(
         return Err(Error::NotFound);
     };
 
-    let limit = limits().user_daily_dollar;
-    let cost = user_daily_cost(&state.db, &authenticated_user.username).await?;
+    // user limit
 
-    let mut percentage = if limit < 0.0001 {
+    let user_limit = limits().user_daily;
+    let cost = user_daily_cost(&state.db, &authenticated_user.username).await?;
+    let user_percentage = if user_limit < 0.0001 {
         100
     } else if cost < 0.0001 {
         0
     } else {
-        ((cost / limit) * 100.0).round() as u8
+        ((cost / user_limit) * 100.0).round() as u8
     };
 
+    // application limit
+
+    let app_limit = limits().application_daily;
+    let app_cost = application_daily_cost(&state.db).await?;
+    let app_percentage = if app_limit < 0.0001 {
+        100
+    } else if app_cost < 0.0001 {
+        0
+    } else {
+        ((app_cost / app_limit) * 100.0).round() as u8
+    };
+
+    // limit = max of user and app
+
+    let mut percentage = std::cmp::max(user_percentage, app_percentage);
     if percentage > 100 {
         percentage = 100;
     }

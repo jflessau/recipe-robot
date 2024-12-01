@@ -3,7 +3,7 @@
 	import Ingredient from '../components/Ingredient.svelte';
 	import Error from '../components/Error.svelte';
 	import Me from '../components/Me.svelte';
-	import { Api, Ingredient as IngredientType, Item } from './../api.svelte';
+	import { Api, Ingredient as IngredientType } from './../api.svelte';
 	import { getMe } from './../store.svelte';
 	import NotebookPen from '~icons/lucide/notebook-pen';
 	import Trash2 from '~icons/lucide/trash-2';
@@ -16,12 +16,6 @@
 </script>
 
 <div class="w-full flex flex-col items-center justify-start gap-8">
-	<img
-		src="/img/logo.png"
-		alt="shopping bag with various items like apples, bottles, fruits and vegetables"
-		class="w-32"
-	/>
-
 	{#if typeof state === 'string'}
 		<h1 class="w-full text-center text-2xl font-black text-attention">Rezept Ranger</h1>
 	{/if}
@@ -88,7 +82,9 @@
 						<button
 							class="px-2 py-1 text-s text-bold text-error gap-2 rounded border border-error flex items-center justify-center"
 							on:click={() => {
-								state = state.filter((s) => s.id !== i.id);
+								if (typeof state !== 'string') {
+									state = state.filter((s) => s.id !== i.id);
+								}
 							}}
 						>
 							<Trash2 class="w-5 h-5 text-success" />
@@ -110,12 +106,14 @@
 					<Ingredient
 						ingredient={i}
 						on:update={(e) => {
-							state = state.map((s) => {
-								if (s.id === e.detail.id) {
-									return e.detail;
-								}
-								return s;
-							});
+							if (typeof state !== 'string') {
+								state = state.map((s) => {
+									if (s.id === e.detail.id) {
+										return e.detail;
+									}
+									return s;
+								});
+							}
 						}}
 					/>
 				{/each}

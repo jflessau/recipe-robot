@@ -1,23 +1,29 @@
 # 🥔 recipe-ranger
 
-Web app written in [rust](https://www.rust-lang.org/) with [leptos](https://leptos.dev/).
+<img alt="A cute robot holding and looking at a piece of paper with a recipe on it." src="web/public/img/logo.png" width="180px"/>
+
+Web app written in [rust](https://www.rust-lang.org/) and [svelte](https://svelte.dev/).
 
 Here is what it can do for you:
 
 1. Enter the text of a recipe.
 2. AI extracts the ingredients.
 3. It searches for matching items from grocery stores.
-4. Composes a shopping list, with prices & quantities.
+4. Composes a shopping list, with prices, quantities & more.
 
 ## Development
 
-1. Rename `.env.example` to `.env` and fill in the values.
-2. Start the [Surreal](https://surrealdb.com/) database with docker compose.
-3. Run the migrations with [surrealdb-migrations](https://github.com/Odonno/surrealdb-migrations).
-4. Start the server with with `cargo leptos watch`.
+1. Rename `./server/.env.example` to `./server/.env` and fill in the values
+2. Start the [Surreal](https://surrealdb.com/) database
+3. Run the migrations
+4. Start the server
+5. Install the web app dependencies
+6. Start the web app
 
 ```sh
-# env vars
+# switch to server dir
+cd server
+# populate .env file
 cp .env.example .env
 # start db
 docker compose up -d
@@ -25,24 +31,31 @@ docker compose up -d
 cargo install surrealdb-migrations
 surrealdb-migrations apply
 # start server
-cargo leptos watch
+cargo run
+
+# switch to web dir
+cd ../web
+# install dependencies with bun, npm, etc.
+bun run i
+# start the web app
+bun run dev
 ```
 
-## TODOs
+## Deployment
 
-- [x] DB migration for users, invites and stuff
-- [x] Accept invite
-- [x] User Login
-- [x] User Logout
-- [x] Authentication wrapper for views
-- [x] Submit recipe
-- [x] Search for items matching an ingredient
-- [x] Bookkeeping of AI costs
-- [x] Deny requests if costs in past 24h exceed 50 cents
-- [x] Nicer server errors
+Docker images are built (and pushed to ghcr.io) within the CI actions.
+For local building of the images, see `./.github/workflows/ci.yml`.
+
+## ToDos
+
+- [x] Swap logo and favicon
 - [ ] CI file
 - [ ] Deploy
-- [ ] Add dev and deployment info to README
+- [ ] Beautify Readme
+
+```
+
+```
 
 ```
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Api } from './../api.svelte';
 	import { meStore, getMe } from './../store.svelte';
 
 	$: me = $meStore;
@@ -24,5 +25,12 @@
 				Du hast dein tägliches Limit für Anfragen erreicht. Du kannst morgen weitermachen :)
 			</p>
 		{/if}
+		<button
+			class="font-bold underline text-s"
+			on:click={async () => {
+				await Api.logout();
+				getMe();
+			}}>Logout</button
+		>
 	</div>
 {/if}
