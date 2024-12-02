@@ -10,6 +10,7 @@
 	import CirclePlus from '~icons/lucide/circle-plus';
 	import CircleMinus from '~icons/lucide/circle-minus';
 	import CircleCheck from '~icons/lucide/circle-check';
+	import Send from '~icons/lucide/send';
 
 	export let ingredient: Ingredient;
 
@@ -17,31 +18,61 @@
 	let state: 'LOADING' | 'ERROR' | 'IDLE' = 'LOADING';
 	$: ingredient = { ...ingredient };
 	$: expanded = false;
+	$: edit = false;
+	$: edited = false;
+
+	const refresh = async () => {
+		state = 'LOADING';
+		try {
+			let r = await Api.ingredientItems(ingredient);
+			dispatch('update', r.data);
+			getMe();
+			state = 'IDLE';
+		} catch (e) {
+			state = 'ERROR';
+			console.error(e);
+		}
+	};
 
 	onMount(async () => {
 		if (!ingredient.item) {
-			state = 'LOADING';
-			try {
-				let r = await Api.ingredientItems(ingredient);
-				dispatch('update', r.data);
-				getMe();
-			} catch (e) {
-				state = 'ERROR';
-				console.error(e);
-			}
+			await refresh();
 		}
 	});
 </script>
 
-<div class="w-full flex bg-mid p-3 rounded-lg ingredient-list-item">
+<div class="w-full flex bg-mid p-3 rounded-lg ingredient-list-item gap-2 {state === 'LOADING' ? 'pulsating' : ''}">
 	{#if ingredient.item}
 		<div class="w-full flex-col items-start justify-start gap-1.5">
 			<div class="w-full flex flex-row items-center justify-start gap-2">
 				<NotebookText class="min-w-5 min-h-5" />
-				<p class="text-s">
-					{ingredient.name}
-				</p>
-				<p class="opacity-50 text-s">({ingredient.quantity} {ingredient.unit})</p>
+				{#if edit}
+					<input class="text-s h-7 rounded border-none px-2 py-1 w bg-bg" bind:value={ingredient.name} />
+					<button
+						class="rounded bg-info p-1"
+						disabled={ingredient.name.trim().length < 2}
+						on:click={async () => {
+							ingredient.name = ingredient.name.trim();
+							ingredient.unit = 'Stück';
+							ingredient.quantity = 1;
+							ingredient.probablyAtHome = false;
+							edit = false;
+							edited = true;
+							await refresh();
+						}}
+					>
+						<Send class="w-5 h-5 text-color-inverted" />
+					</button>
+				{:else}
+					<button on:click={() => (edit = true)}>
+						<p class="text-s">
+							{ingredient.name}
+						</p>
+					</button>
+					{#if !edited}
+						<p class="opacity-50 text-s">({ingredient.quantity} {ingredient.unit})</p>
+					{/if}
+				{/if}
 			</div>
 			<div class="w-full flex flex-row items-center justify-start gap-2">
 				<Basket class="min-w-5 min-h-5" />

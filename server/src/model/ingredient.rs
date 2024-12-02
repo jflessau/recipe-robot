@@ -1,14 +1,14 @@
 use super::item::Item;
 use crate::prelude::*;
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Ingredient {
     #[serde(default = "new_id")]
     pub id: String,
     pub name: String,
     pub probably_at_home: bool,
     pub unit: String,
-    pub quantity: i64,
+    pub quantity: f64,
 
     item: Option<Item>,
     #[serde(default)]
@@ -43,4 +43,6 @@ const INGREDIENT_NAME_MAPPINGS: &[(&str, &str)] = &[
     ("Zucker", "Zucker"),
     ("Salz", "Speisesalz"),
     ("Ei", "Eier"),
+    ("Eiweiß", "Eier"),
+    ("Eigelb", "Eier"),
 ];

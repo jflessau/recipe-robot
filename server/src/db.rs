@@ -36,7 +36,7 @@ impl From<Ingredient> for IngredientDb {
 pub struct Requires {
     pub r#in: Thing,
     pub out: Thing,
-    pub quantity: i64,
+    pub quantity: f64,
     pub unit: String,
 }
 
@@ -44,7 +44,7 @@ pub struct Requires {
 pub struct Seeks {
     pub r#in: Thing,
     pub out: Thing,
-    pub quantity: i64,
+    pub quantity: f64,
     pub unit: String,
     pub vendor: String,
 }

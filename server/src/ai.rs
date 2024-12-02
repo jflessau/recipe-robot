@@ -143,7 +143,7 @@ impl Ai {
             Falls dieselbe Zutat mehrfach erwähnt wird, z. B. für Teig und Sauce, dann liste sie nur einmal und addiere die Mengen.
 
             Für "unit" sind einzig und allein diese werte zulässig: "Gramm", "Kilogramm", "Milliliter", "Liter", "Stück".
-            "quantity" gibt die Menge der Zutat in der Einheit an. Nur ganze Zahlen sind zulässig.
+            "quantity" gibt die Menge der Zutat in der Einheit an. Wenn möglich als Ganzzahl, ansonsten als Dezimalzahl.
             Rechne "unit" und "quantity" entsprechend um, fall die im Rezept angegebene einheit nicht in der liste der zulässigen einheiten ist.
             
             Wenn die Zutat sehr wahrscheinlich in einem normalen Haushalt vorhanden ist, setze "probably_at_home" auf „true“.
@@ -190,7 +190,7 @@ impl Ai {
             Ich möchte, dass du den besten Artikel für die Zutat auswählst.
 
             item_index ist der Index des Artikels in der
-            pieces_required gibt an, wie oft der Artikel gekauft werden muss. Wenn das Rezept z. B. 2,5 Liter Milch verlangt und der ausgewählte Artikel 1 Liter Milch umfasst, musst du pieces_required auf 3 setzen.
+            pieces_required gibt an, wie oft der Artikel gekauft werden muss um die Menge der Zutat zu decken.
 
             Falls es keine Übereinstimmung für die Zutat gibt, setze item_index auf null.
 
@@ -202,8 +202,11 @@ impl Ai {
             }
         "#;
         let prompt = format!(
-            "{prompt}\n\nZutat: {}\n\nArtikel aus dem Supermakrt: {:?}",
-            ingredient.name, ingredient.alternatives
+            "{prompt}\n\nZutat: {}\n\nBenötigte Menge der Zutat: {} {}\n\nArtikel aus dem Supermakrt: {:?}",
+            ingredient.name,
+            ingredient.quantity,
+            ingredient.unit,
+            ingredient.alternatives,
         );
 
         // ask ai
