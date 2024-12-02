@@ -19,7 +19,8 @@ Extracting and matching ingredients is done with a heavy LLM, which is not exact
 Therefore the demo limits requests per day. At the bottom of the demo app is a `xx %` indicator, showing how much of the daily quota is already used.
 
 <details>
-  <summary>Video</summary>
+  <summary>Demo GIF</summary>
+  <img alt="Screen recording of the demo app. User enters a recipe into a text field, then hits the submit button. After a few seconds the app has extracted the ingredients like 'salt' & 'olive oil' and matched them to items from a grocery store. Ingredients with their matching items are displayed in a list, with prices and quantities. Above that list is another one of ingredients the user probably already has at home, for the user to quickly remove from the shopping list. With a click on a 'more info'-button on one of the listed ingredients, the user sees alternative items for an ingredient and then selects one of those as it matches the ingredient better (swaps parsley in a pot with parsley in a bag). Finally the users scrools back up and the recording ends." src="demo.gif" width="320px"/>
 
 ![Demo](demo.mp4)
 
